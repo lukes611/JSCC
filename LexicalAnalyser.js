@@ -2,19 +2,6 @@ var CSourceCode = require('./CSourceCode');
 var Lexicon = require('./Lexicon');
 
 
-//a state object is used to decide the state of the
-//state machine for interpreting c
-function State(nextState, popChar, str, lexi){
-	this.nextState = nextState;
-	this.popChar = popChar;
-	this.str = str;
-	this.lexi = lexi;
-}
-
-//adds a lexical object to the list if it is not undefined
-State.prototype.addLexiObjToList = function(list){
-	if(this.lexi !== undefined) list.push(this.lexi);
-};
 
 //an object which performs the lexical analysis
 function LexicalAnalyser(sourcecode){
@@ -27,11 +14,7 @@ function LexicalAnalyser(sourcecode){
 //an initialization function
 LexicalAnalyser.prototype.init = function(){
 	this.stateMachineFunctions = new Array(1);
-	var alpha = 'abcdefghijklmnopqrstuvwxyz_';
-	var numer = '0123456789';
-	var isNumer = function(c){ return numer.indexOf(c) != -1; };
-	var isAlpha = function(c){ return alpha.indexOf(c) != -1; };
-
+	
 	//blank spaces
 	this.stateMachineFunctions[0] = function(state, char, str, location){ 
 		if(state != 0) return undefined;
@@ -66,15 +49,13 @@ LexicalAnalyser.prototype.compute = function(){
 	var out = [];
 	while(!sc.eof()){
 		var char = sc.top();
-		for(var i = 0; i < flist.length; i++){
-			var x = flist[i](state, char, str);
-			if(x !== undefined){
-				x.addLexiObjToList(out);
-				state = x.nextState;
-				str = x.str;
-				if(x.popChar) sc.pop();
-				break;
-			}
+		var x = flist[i](state, char, str);
+		if(x !== undefined){
+			x.addLexiObjToList(out);
+			state = x.nextState;
+			str = x.str;
+			if(x.popChar) sc.pop();
+			break;
 		}
 	}
 	console.log(out);

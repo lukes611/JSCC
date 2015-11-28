@@ -23,7 +23,8 @@ operators:
 
 basic state machine practice:
 	1 function per state:
-		function returns the next state, whether to pop or not, the tmp string contents, a lexicon or nor
+		input: sourcecode, lexicalStateObject: state, str
+		function a lexicon or undefined
 
 
 
