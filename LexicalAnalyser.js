@@ -8,57 +8,62 @@ function LexicalAnalyser(sourcecode){
 	this.sourceCode = sourcecode;
 	this.sourceCode.reset();
 	this.stateMachineFunctions = [];
-	this.init();
 }
 
-//an initialization function
-LexicalAnalyser.prototype.init = function(){
-	this.stateMachineFunctions = new Array(1);
-	
-	//blank spaces
-	this.stateMachineFunctions[0] = function(state, char, str, location){ 
-		if(state != 0) return undefined;
-		if(char == ' ') return new State(0,true,'');
-		return undefined;
-	};
+LexicalAnalyser.prototype.step = function(x){
+	x.lexicon = undefined;
+	//needs state number, return new state and lexicon as well as string
+	var c = this.sourceCode.top();
+	var sc = this.sourceCode;
+	//console.log(x);
+	if(x.state == 0){
+		if(sc.topIsAlpha()){
+			x.state = 1;
+			x.str = c;
+			x.location = sc.getLocation();
+		}else if(sc.topIsSingleSymbol()){
+			
+		}
 
-	//words start
-	this.stateMachineFunctions[1] = function(state, char, str, location){ 
-		if(state != 0) return undefined;
-		var c = char.toLowerCase();
-		if(isAlpha(c)) return new State(2,true,str+char);
-		return undefined;
-	};
-	this.stateMachineFunctions[2] = function(state, char, str, location){
-		if(state != 2) return undefined; 
-		var c = char.toLowerCase();
-		if(isAlpha(c) || isNumer(c)) return new State(2,true,str+char);
-		return new State(0,false,'', new Lexicon(str));
-	};
-
-
-	
+	}else if(x.state == 1){
+		if(sc.topIsAlpha() || sc.topIsNumerical()){
+			x.str += c;
+		}else{
+			x.lexicon = new Lexicon(this.interpretString(x.str), 
+				x.str, x.location, sc.getLocation());
+			x.state = 0;
+			return;
+		}
+	}
+	this.sourceCode.pop();
 };
 
 //this function computes the lexicons
 LexicalAnalyser.prototype.compute = function(){
-	sc = this.sourceCode;
-	flist = this.stateMachineFunctions;
-	var state = 0;
-	var str = '';
+	var sc = this.sourceCode;
 	var out = [];
+	var ob = {
+		"state" : 0, //the start state
+		"lexicon" : undefined,
+		"str" : '',
+		"location" : sc.getLocation()
+	};
 	while(!sc.eof()){
-		var char = sc.top();
-		var x = flist[i](state, char, str);
-		if(x !== undefined){
-			x.addLexiObjToList(out);
-			state = x.nextState;
-			str = x.str;
-			if(x.popChar) sc.pop();
-			break;
-		}
+		this.step(ob);
+		if(ob.lexicon !== undefined) out.push(ob.lexicon);
 	}
-	console.log(out);
+	out.forEach(function(x){
+		console.log(x.toString());
+	});
+};
+
+//check a string input for it's type
+LexicalAnalyser.prototype.interpretString = function(str){
+	var types = 'double int char void struct short float union'.split(' ');
+	var selfDescribers = 'for while if else switch return'.split(' ');
+	if(types.indexOf(str) != -1) return 'TYPE';
+	else if(selfDescribers.indexOf(str) != -1) return '' + str;
+	return 'variable';
 };
 
 module.exports = LexicalAnalyser;

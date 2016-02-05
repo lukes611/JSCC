@@ -7,7 +7,7 @@ function CSourceCode(str){
 	this.lines = str.split("\n");
 	this.lineIter = 0;
 	this.colIter = 0;
-	this.alphabet = 'abcdefghijklmnopqrstuvwxyz';
+	this.alphabet = 'abcdefghijklmnopqrstuvwxyz_ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 	this.numbers = '0123456789';
 	this.singleSymbols = '(){}#"\'.,?:[];';
 	this.doubleSymbols = '+-*/<>!=&|~^';
@@ -83,6 +83,7 @@ CSourceCode.prototype.getLocation = function(){
 		column : this.colIter
 	};
 }
+
 
 //checks to see if the top symbol is in the specified string. eg. is 'c' in 'abc' : yes
 CSourceCode.prototype.topSymbolIn = function(str){

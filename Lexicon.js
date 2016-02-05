@@ -1,7 +1,12 @@
-function Lexicon(str, location){
+function Lexicon(type, str, locationFrom, locationTo){
+	this.lexiType = type;
 	this.str = str;
-	this.location = location;
+	this.locations = [locationFrom, locationTo];
 }
+
+Lexicon.prototype.toString = function(){
+	return this.lexiType + ': (' + this.str + ')';
+};
 
 
 
