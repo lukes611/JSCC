@@ -11,21 +11,25 @@ function LexicalAnalyser(sourcecode){
 }
 
 LexicalAnalyser.prototype.step = function(x){
-	x.lexicon = undefined;
+	x.lexicon = undefined; //set no lexicon to be returned
 	//needs state number, return new state and lexicon as well as string
-	var c = this.sourceCode.top();
-	var sc = this.sourceCode;
+	var c = this.sourceCode.top(); //get the next character
+	var sc = this.sourceCode; //a simple link to the source code object
 	//console.log(x);
-	if(x.state == 0){
-		if(sc.topIsAlpha()){
+	if(x.state == 0){ //if default state
+		if(sc.topIsAlpha()){ //if numerical character is read
 			x.state = 1;
 			x.str = c;
 			x.location = sc.getLocation();
 		}else if(sc.topIsSingleSymbol()){
-			
+			x.lexicon = new Lexicon(c, c, x.location, x.location);
+		}else if(sc.topIsNumerical()){
+			x.str = c;
+			x.state = 2;
+			x.location = sc.getLocation();
 		}
 
-	}else if(x.state == 1){
+	}else if(x.state == 1){ //possible key-word or variable
 		if(sc.topIsAlpha() || sc.topIsNumerical()){
 			x.str += c;
 		}else{
@@ -33,6 +37,31 @@ LexicalAnalyser.prototype.step = function(x){
 				x.str, x.location, sc.getLocation());
 			x.state = 0;
 			return;
+		}
+	}else if(x.state == 2){ //number type int loop
+		if(c == '.'){
+			x.str += c;
+			x.state = 3;
+		}else if(sc.topIsNumerical()){
+			x.str += c;
+		}else{
+			x.lexicon = new Lexicon('int', x.str, x.location, sc.getLocation());
+			x.state = 0;
+			return;
+		}
+	}else if(x.state == 3){ //number type float or double, start
+		if(!sc.topIsNumerical()){
+			x.error = true;
+			x.msg = 'incorrectly specified float or double @ line: ' + x.location.line +
+			' and column: ' + x.location.column;
+			return;
+		}else{
+			x.str += c;
+			x.state = 4;
+		}
+	}else if(x.state == 4){ //continuation of float or double
+		if(sc.topIsNumerical()){
+			
 		}
 	}
 	this.sourceCode.pop();
@@ -46,7 +75,9 @@ LexicalAnalyser.prototype.compute = function(){
 		"state" : 0, //the start state
 		"lexicon" : undefined,
 		"str" : '',
-		"location" : sc.getLocation()
+		"location" : sc.getLocation(),
+		"error" : false,
+		"msg" : ''
 	};
 	while(!sc.eof()){
 		this.step(ob);
@@ -63,7 +94,7 @@ LexicalAnalyser.prototype.interpretString = function(str){
 	var selfDescribers = 'for while if else switch return'.split(' ');
 	if(types.indexOf(str) != -1) return 'TYPE';
 	else if(selfDescribers.indexOf(str) != -1) return '' + str;
-	return 'variable';
+	return 'name';
 };
 
 module.exports = LexicalAnalyser;
