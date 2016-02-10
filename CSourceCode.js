@@ -9,8 +9,11 @@ function CSourceCode(str){
 	this.colIter = 0;
 	this.alphabet = 'abcdefghijklmnopqrstuvwxyz_ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 	this.numbers = '0123456789';
-	this.singleSymbols = '(){}#"\'.,?:[];';
+	this.singleSymbols = '(){}#.,?:[];';
 	this.doubleSymbols = '+-*/<>!=&|~^';
+	this.doubleOperators = ('++ += -- -= -> / /= *= <= << == >= >> && &= || |= !=' +
+	'~= ^=').split(' ');
+
 	this.whiteSpaceSymbols = ' \t\n\r';
 	this.setup();
 }

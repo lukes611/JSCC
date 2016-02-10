@@ -23,9 +23,24 @@ LexicalAnalyser.prototype.step = function(x){
 			x.location = sc.getLocation();
 		}else if(sc.topIsSingleSymbol()){
 			x.lexicon = new Lexicon(c, c, x.location, x.location);
+		}else if(sc.topIsDoubleSymbol()){
+			var version1 = c; sc.pop();
+			var version2 = c + sc.top();
+			var index = sc.doubleOperators.indexOf(version2);
+			if(index == -1){
+				x.lexicon = new Lexicon(c, c, x.location, x.location);
+			}else{
+				x.lexicon = new Lexicon(version2, version2, x.location, x.location);
+				sc.pop();
+			}
+			return;
 		}else if(sc.topIsNumerical()){
 			x.str = c;
 			x.state = 2;
+			x.location = sc.getLocation();
+		}else if(c == '\''){
+			x.str = '';
+			x.state = 5;
 			x.location = sc.getLocation();
 		}
 
@@ -61,8 +76,44 @@ LexicalAnalyser.prototype.step = function(x){
 		}
 	}else if(x.state == 4){ //continuation of float or double
 		if(sc.topIsNumerical()){
-			
+			x.str += c;
+		}else if(c == 'f'){
+			x.lexicon = new Lexicon('float', x.str, x.location, sc.getLocation());
+			x.state = 0;
+		}else{
+			x.lexicon = new Lexicon('double', x.str, x.location, sc.getLocation());
+			x.state = 0;
+			return;
 		}
+	}else if(x.state == 5){
+		var ch = c; sc.pop();
+		var next = sc.top();
+		if(ch == '\\'){
+			state = 6;
+			return;
+		}
+		
+		if(next != '\''){
+			x.error = 'incorrectly specified char @ line: ' + x.location.line +
+			' and column: ' + x.location.column;
+			return;
+		}
+		sc.pop();
+		x.lexicon = new Lexicon('char', ch, x.location, sc.getLocation());
+		x.state = 0;
+		return;
+	}else if(x.state == 6){
+		var ch = c; sc.pop();
+		var next = sc.top();
+		if(next != '\''){
+			x.error = 'incorrectly specified char @ line: ' + x.location.line +
+			' and column: ' + x.location.column;
+			return;
+		}
+		sc.pop();
+		x.lexicon = new Lexicon('char', ch, x.location, sc.getLocation());
+		x.state = 0;
+		return;
 	}
 	this.sourceCode.pop();
 };

@@ -13,12 +13,31 @@ also files are included only once
 key words:
 int char unsigned short long double float return struct union if else for while switch 
 
+
+
 literals:
 "string" 'c' 1 0xFF 2.0f 2.0
 
 operators:
 +-*/ << >> -- ++ () func() += & * - ! ~
 ! == != && || < <= >= > ->
+
+double operators:
+	this.doubleSymbols = '+-*/<>!=&|~^';
+	+ ++ +=
+	- -- -= ->
+	/ / /=
+	* *=
+	< <= <<
+	= ==
+	> >= >>
+	& && &=
+	| || |=
+	! !=
+	~ ~=
+	^ ^=
+
+
 
 
 basic state machine practice:
