@@ -184,9 +184,7 @@ LexicalAnalyser.prototype.compute = function(){
 		this.step(ob);
 		if(ob.lexicon !== undefined) out.push(ob.lexicon);
 	}
-	out.forEach(function(x){
-		console.log(x.toString());
-	});
+	return out;
 };
 
 //check a string input for it's type
