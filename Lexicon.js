@@ -5,7 +5,7 @@ function Lexicon(type, str, locationFrom, locationTo){
 }
 
 Lexicon.prototype.toString = function(){
-	return this.lexiType + '\t' + this.str;
+	return this.lexiType + '\t\t\t' + this.str;
 };
 
 

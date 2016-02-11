@@ -35,12 +35,26 @@ LexicalAnalyser.prototype.step = function(x){
 			}
 			return;
 		}else if(sc.topIsNumerical()){
-			x.str = c;
-			x.state = 2;
 			x.location = sc.getLocation();
+			sc.pop();
+			var nc = sc.top();
+			if(c == '0' && ['x', 'X'].indexOf(nc) != -1){
+				sc.pop();
+				x.state = 7;
+				x.str = '';
+			}else{
+				x.state = 2;
+				x.str = c;
+				x.location = sc.getLocation();
+			}
+			return;
 		}else if(c == '\''){
 			x.str = '';
 			x.state = 5;
+			x.location = sc.getLocation();
+		}else if(c == '"'){
+			x.str = '';
+			x.state = 9;
 			x.location = sc.getLocation();
 		}
 
@@ -94,7 +108,8 @@ LexicalAnalyser.prototype.step = function(x){
 		}
 		
 		if(next != '\''){
-			x.error = 'incorrectly specified char @ line: ' + x.location.line +
+			x.error = true;
+			x.msg = 'incorrectly specified char @ line: ' + x.location.line +
 			' and column: ' + x.location.column;
 			return;
 		}
@@ -106,7 +121,8 @@ LexicalAnalyser.prototype.step = function(x){
 		var ch = c; sc.pop();
 		var next = sc.top();
 		if(next != '\''){
-			x.error = 'incorrectly specified char @ line: ' + x.location.line +
+			x.error = true;
+			x.msg = 'incorrectly specified char @ line: ' + x.location.line +
 			' and column: ' + x.location.column;
 			return;
 		}
@@ -114,6 +130,40 @@ LexicalAnalyser.prototype.step = function(x){
 		x.lexicon = new Lexicon('char', ch, x.location, sc.getLocation());
 		x.state = 0;
 		return;
+	}else if(x.state == 7){
+		if(sc.topIsHexSymbol()){
+			x.str += c;
+			x.state = 8;
+		}else{ //error, must be at least one hex number
+			x.error = true;
+			x.msg = 'incorrectly specified hex number @ line: ' + x.location.line +
+			' and column: ' + x.location.column;
+			return;
+		}
+	}else if(x.state == 8){ //continuation of hex number
+		if(sc.topIsHexSymbol()){
+			x.str += c;
+		}else{
+			x.lexicon = new Lexicon('hex', x.str, x.location, sc.getLocation());
+			x.state = 0;
+			x.str = '';
+			return;
+		}
+	}else if(x.state == 9){
+		if(c == '"'){
+			x.lexicon = new Lexicon('string', x.str, x.location, sc.getLocation());
+			x.state = 0;
+			x.str = '';
+		}else if(c == '\\'){
+			x.state = 10;
+		}else if(c == '\n'){
+			x.error = true;
+			x.msg = 'incorrectly specified string @ line: ' + x.location.line +
+			' and column: ' + x.location.column;
+		}else x.str += c;
+	}else if(x.state == 10){
+		x.str += c;
+		x.state = 9;
 	}
 	this.sourceCode.pop();
 };
@@ -141,10 +191,11 @@ LexicalAnalyser.prototype.compute = function(){
 
 //check a string input for it's type
 LexicalAnalyser.prototype.interpretString = function(str){
-	var types = 'double int char void struct short float union'.split(' ');
+	var types = 'double,int,char,void,struct,short,float,union'.split(',');
 	var selfDescribers = 'for while if else switch return'.split(' ');
 	if(types.indexOf(str) != -1) return 'TYPE';
 	else if(selfDescribers.indexOf(str) != -1) return '' + str;
+	else if(str == 'unsigned') return 'MODIFIER';
 	return 'name';
 };
 

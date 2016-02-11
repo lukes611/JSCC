@@ -9,6 +9,7 @@ function CSourceCode(str){
 	this.colIter = 0;
 	this.alphabet = 'abcdefghijklmnopqrstuvwxyz_ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 	this.numbers = '0123456789';
+	this.hexSymbols = '0123456789ABCDEFabcdef';
 	this.singleSymbols = '(){}#.,?:[];';
 	this.doubleSymbols = '+-*/<>!=&|~^';
 	this.doubleOperators = ('++ += -- -= -> / /= *= <= << == >= >> && &= || |= !=' +
@@ -118,6 +119,11 @@ CSourceCode.prototype.topIsDoubleSymbol = function(){
 	return this.topSymbolIn(this.doubleSymbols);
 };
 
+
+//checks to see if the top char is a double symbol
+CSourceCode.prototype.topIsHexSymbol = function(){
+	return this.topSymbolIn(this.hexSymbols);
+};
 
 
 
