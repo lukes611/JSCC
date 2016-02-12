@@ -44,6 +44,7 @@ Parser.prototype.error = function(str){
 };
 
 Parser.prototype.matchType = function(type){
+	if(this.top() === undefined) this.error('error matching');
 	if(this.top().type != type){
 		this.error('error matching');
 	}
@@ -51,10 +52,39 @@ Parser.prototype.matchType = function(type){
 };
 
 Parser.prototype.checkType = function(type){
+	if(this.top() === undefined) return false;
 	if(this.top().type != type){
 		return false;
 	}
 	return true;
+};
+
+Parser.prototype.adders = function(){
+	var e1 = this.preElement();
+	if(this.checkType('+')){
+		this.pop();
+		var e2 = this.preElement();
+		var name = this.no.newTmpName();
+		var bestType = this.no.typeResolution(e1.dtype, e2.dtype);
+		e1 = this.convertToTypeIfNeccecary(e1, bestType);
+		e2 = this.convertToTypeIfNeccecary(e2, bestType);
+		var vari = new Variable(name, bestType, 'tmp', this.no.scope);
+		this.variables.push(vari);
+		this.assembly.push('add ' + vari.name + ' ' + e1.name + ' ' + e2.name);
+		return vari;
+	}else if(this.checkType('-')){
+		this.pop();
+		var e2 = this.preElement();
+		var name = this.no.newTmpName();
+		var bestType = this.no.typeResolution(e1.dtype, e2.dtype);
+		e1 = this.convertToTypeIfNeccecary(e1, bestType);
+		e2 = this.convertToTypeIfNeccecary(e2, bestType);
+		var vari = new Variable(name, bestType, 'tmp', this.no.scope);
+		this.variables.push(vari);
+		this.assembly.push('subtract ' + vari.name + ' ' + e1.name + ' ' + e2.name);
+		return vari; 
+	}
+	return e1;
 };
 
 Parser.prototype.preElement = function(){
@@ -67,6 +97,7 @@ Parser.prototype.preElement = function(){
 		var vari = new Variable(name, rv.dtype, 'tmp', this.no.scope);
 		this.variables.push(vari);
 		this.assembly.push('invert ' + vari.name + ' ' + rv.name);
+		return vari;
 	}else if(this.checkType('!')){
 		this.pop();
 		var rv = this.element();
@@ -74,6 +105,7 @@ Parser.prototype.preElement = function(){
 		var vari = new Variable(name, rv.dtype, 'tmp', this.no.scope);
 		this.variables.push(vari);
 		this.assembly.push('boolNot ' + vari.name + ' ' + rv.name);
+		return vari;
 	}else if(this.checkType('&')){
 		//to do
 	}else if(this.checkType('~')){
@@ -83,18 +115,29 @@ Parser.prototype.preElement = function(){
 		var vari = new Variable(name, rv.dtype, 'tmp', this.no.scope);
 		this.variables.push(vari);
 		this.assembly.push('binaryNot ' + vari.name + ' ' + rv.name);
+		return vari;
 	}else if(this.checkType('(')){
 		this.pop();
 		var type = this.matchType('TYPE');
 		this.matchType(')');
 		var rv = this.element();
-		var name = this.no.newTmpName();
-		var vari = new Variable(name, rv.dtype, 'tmp', this.no.scope);
-		this.variables.push(vari);
-		this.assembly.push('convertTo ' + type.str + ' from ' + rv.dtype + ' ' + vari.name + ' ' + rv.name);
+		return this.convertToType(rv, type.str);
 	}else{
 		return this.element();
 	}
+};
+
+Parser.prototype.convertToType = function(inp, type){
+	var name = this.no.newTmpName();
+	var vari = new Variable(name, type, 'tmp', this.no.scope);
+	this.variables.push(vari);
+	this.assembly.push('convertTo ' + type + ' from ' + inp.dtype + ' ' + vari.name + ' ' + inp.name);
+	return vari;
+};
+
+Parser.prototype.convertToTypeIfNeccecary = function(inp, type){
+	if(inp.dtype != type) return this.convertToType(inp, type);
+	return inp;
 };
 
 Parser.prototype.element = function(){
