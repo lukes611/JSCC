@@ -1,11 +1,11 @@
-Celery - a basic C compiler written in JavaScript for the node.js environment
+JSCC - a basic C compiler written in JavaScript for the node.js environment
 to do:
 lexicon compiler
 syntax tree
 name mapper
 real time engine
 
-shortcomings: structs cannot have functions, no do while, no preprocessor definitions,
+shortcomings: no do while, no preprocessor definitions,
 except #include "blah" or #include <blah>
 also files are included only once
 
@@ -40,10 +40,23 @@ double operators:
 
 
 
-basic state machine practice:
-	1 function per state:
-		input: sourcecode, lexicalStateObject: state, str
-		function a lexicon or undefined
+
+1. Source Code Reading
+2. Lexical Analysis
+3. Parsing
+			a. assembler T0: simplify, one liners -> must keep to and from of the lexicons
+				+ scope and variable tracking and checking:
+					temporary variable tracking, generation and optimization
+			c. assembler T1: pre-linker assembly
+4. linker
+5. assembler
+6. virtual machine
+
+			
+
+3. {
+	variable name, dtype, scope, locations
+}
 
 
 
