@@ -62,10 +62,18 @@ LexicalAnalyser.prototype.step = function(x){
 		if(sc.topIsAlpha() || sc.topIsNumerical()){
 			x.str += c;
 		}else{
-			x.lexicon = new Lexicon(this.interpretString(x.str), 
-				x.str, x.location, sc.getLocation());
-			x.state = 0;
-			return;
+			if(x.str == 'unsigned'){
+				x.state = 12;
+				return;
+			}else if(this.stringIsType(x.str)){
+				x.state = 11;
+				return;
+			}else{
+				x.lexicon = new Lexicon(this.interpretString(x.str), 
+					x.str, x.location, sc.getLocation());
+				x.state = 0;
+				return;
+			}
 		}
 	}else if(x.state == 2){ //number type int loop
 		if(c == '.'){
@@ -164,6 +172,34 @@ LexicalAnalyser.prototype.step = function(x){
 	}else if(x.state == 10){
 		x.str += c;
 		x.state = 9;
+	}else if(x.state == 11){
+		//console.log('here: ' + x.str);
+		if(sc.topIsWhiteSpace()){}
+		else if(c == '*'){
+			x.str += '*';
+		}else{
+			x.lexicon = new Lexicon('TYPE', 
+				x.str, x.location, sc.getLocation());
+			x.state = 0;
+			return;
+		}
+	}else if(x.state == 12){
+		if(sc.topIsWhiteSpace()){}
+		else if(sc.topIsAlpha()){
+			x.str += ' ' + c;
+			x.state = 13;
+		}
+	}else if(x.state == 13){
+		if(this.stringIsUnsignedType(x.str)){
+			x.state = 11;
+			return;	
+		}else if(sc.topIsAlpha()){
+			x.str += c;
+		}else{
+			x.error = true;
+			x.msg = 'incorrectly specified unsigned number @ line: ' + x.location.line +
+			' and column: ' + x.location.column;
+		}
 	}
 	this.sourceCode.pop();
 };
@@ -196,5 +232,22 @@ LexicalAnalyser.prototype.interpretString = function(str){
 	else if(str == 'unsigned') return 'MODIFIER';
 	return 'name';
 };
+
+//check a string input if it is part of a type
+LexicalAnalyser.prototype.stringIsType = function(str){
+	var types = 'double,int,char,void,struct,short,float,union,unsigned'.split(',');
+	if(types.indexOf(str) != -1) return true;
+	return false;
+};
+
+
+//check a string input if it is part of a type
+LexicalAnalyser.prototype.stringIsUnsignedType = function(str){
+	var types = 'unsigned double,unsigned int,unsigned char,unsigned short,unsigned float'.split(',');
+	if(types.indexOf(str) != -1) return true;
+	return false;
+};
+
+
 
 module.exports = LexicalAnalyser;

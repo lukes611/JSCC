@@ -18,8 +18,10 @@ Parser.prototype.printLexicons = function(){
 };
 
 Parser.prototype.toString = function(){
-	var st = '';
-	this.variables.forEach(function(x){st += x.toString();});
+	var st = 'VARIABLES:\n';
+	this.variables.forEach(function(x){st += x.toString() + '\n';});
+	st += 'CODE:\n';
+	this.assembly.forEach(function(x){st += x + '\n'; });
 	return st;
 };
 
@@ -41,16 +43,55 @@ Parser.prototype.error = function(str){
 	assert(false, 'cool');
 };
 
+Parser.prototype.matchType = function(type){
+	if(this.top().type != type){
+		this.error('error matching');
+	}
+	return this.pop();
+};
+
+Parser.prototype.checkType = function(type){
+	if(this.top().type != type){
+		return false;
+	}
+	return true;
+};
+
 Parser.prototype.preElement = function(){
 	//handles: ! (typeconversion) ~ -
 	var e = this.top();
-	if(e.type == '-'){
+	if(this.checkType('-')){
 		this.pop();
 		var rv = this.element();
 		var name = this.no.newTmpName();
-		var vari = new Variable(name, rv.type, 'tmp', this.no.scope);
+		var vari = new Variable(name, rv.dtype, 'tmp', this.no.scope);
 		this.variables.push(vari);
 		this.assembly.push('invert ' + vari.name + ' ' + rv.name);
+	}else if(this.checkType('!')){
+		this.pop();
+		var rv = this.element();
+		var name = this.no.newTmpName();
+		var vari = new Variable(name, rv.dtype, 'tmp', this.no.scope);
+		this.variables.push(vari);
+		this.assembly.push('boolNot ' + vari.name + ' ' + rv.name);
+	}else if(this.checkType('&')){
+		//to do
+	}else if(this.checkType('~')){
+		this.pop();
+		var rv = this.element();
+		var name = this.no.newTmpName();
+		var vari = new Variable(name, rv.dtype, 'tmp', this.no.scope);
+		this.variables.push(vari);
+		this.assembly.push('binaryNot ' + vari.name + ' ' + rv.name);
+	}else if(this.checkType('(')){
+		this.pop();
+		var type = this.matchType('TYPE');
+		this.matchType(')');
+		var rv = this.element();
+		var name = this.no.newTmpName();
+		var vari = new Variable(name, rv.dtype, 'tmp', this.no.scope);
+		this.variables.push(vari);
+		this.assembly.push('convertTo ' + type.str + ' from ' + rv.dtype + ' ' + vari.name + ' ' + rv.name);
 	}else{
 		return this.element();
 	}
