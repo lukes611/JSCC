@@ -19,7 +19,7 @@ literals:
 "string" 'c' 1 0xFF 2.0f 2.0
 
 operators:
-+-*/ << >> -- ++ () func() += & * - ! ~
++-*/ << >> -- ++ () func() += & * - ! ~ %
 ! == != && || < <= >= > ->
 
 double operators:
@@ -28,6 +28,7 @@ double operators:
 	- -- -= ->
 	/ / /=
 	* *=
+	% %=
 	< <= <<
 	= ==
 	> >= >>
