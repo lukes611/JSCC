@@ -7,7 +7,7 @@ var lx = new LexicalAnalyser(code);
 var parser = new Parser(lx.compute());
 //parser.printLexicons();
 
-parser.factors();
+parser.adders();
 
 console.log(parser.toString());
 

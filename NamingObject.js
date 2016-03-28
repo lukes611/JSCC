@@ -10,6 +10,7 @@ NamingObject.prototype.newTmpName = function(){
 	return rv;
 };
 
+
 NamingObject.prototype.simpleType = function(t){
 	t = t.replace(/ /, '');
 	t = t.replace(/unsigned/, '');
