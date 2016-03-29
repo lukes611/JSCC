@@ -78,7 +78,7 @@ Parser.prototype.moreBitwise = function(e1){
 			var vari = new Variable(name, bestType, 'tmp', this.no.scope);
 			this.variables.push(vari);
 			this.assembly.push(op + ' ' + vari.name + ' ' + e1.name + ' ' + e2.name);
-			return this.moreComparators(vari);
+			return this.moreBitwise(vari);
 		}
 	}
 	return e1;
