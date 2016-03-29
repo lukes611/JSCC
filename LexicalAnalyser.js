@@ -17,12 +17,15 @@ LexicalAnalyser.prototype.step = function(x){
 	var sc = this.sourceCode; //a simple link to the source code object
 	//console.log(x);
 	if(x.state == 0){ //if default state
-		if(sc.topIsAlpha()){ //if numerical character is read
+		if(sc.topIsAlpha()){ //if alphabetical character is read
 			x.state = 1;
 			x.str = c;
 			x.location = sc.getLocation();
 		}else if(sc.topIsSingleSymbol()){
 			x.lexicon = new Lexicon(c, c, x.location, x.location);
+		}else if(c == '/'){
+			x.state = 14;
+			x.location = sc.getLocation();
 		}else if(sc.topIsDoubleSymbol()){
 			var version1 = c; sc.pop();
 			var version2 = c + sc.top();
@@ -199,6 +202,34 @@ LexicalAnalyser.prototype.step = function(x){
 			x.error = true;
 			x.msg = 'incorrectly specified unsigned number @ line: ' + x.location.line +
 			' and column: ' + x.location.column;
+		}
+	}else if(x.state == 14){//read in possible comment after receiving /
+		var version1 = '/';
+		var version2 = '/' + c;
+		if(version2 == '/*'){
+			x.state = 16;
+		}else if(version2 == '//'){
+			x.state = 15;
+		}else{
+			var index = sc.doubleOperators.indexOf(version2);
+			if(index == -1){
+				x.lexicon = new Lexicon(c, c, x.location, x.location);
+				return;
+			}else{
+				x.lexicon = new Lexicon(version2, version2, x.location, sc.getLocation());
+			}
+		}
+	}else if(x.state == 15){//continue until new line character read
+		if(c == "\n" || c == "\r"){
+			x.state = 0;
+		}
+	}else if(x.state == 16){//continue until */ is read
+		if(c == '*'){
+			sc.pop();
+			var version2 = c + sc.top();
+			if(version2 == '*/'){
+				x.state = 0;
+			}
 		}
 	}
 	this.sourceCode.pop();

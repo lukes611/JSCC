@@ -59,6 +59,68 @@ Parser.prototype.checkType = function(type){
 	return true;
 };
 
+Parser.prototype.ternary = function(){
+	var e1 = this.logic();
+	if(this.checkType('?')){
+		this.pop();
+		var l1 = this.no.newTmpLabel();
+		var l2 = this.no.newTmpLabel();
+		var oldAssembly = this.assembly;
+		this.assembly = [];
+		var e2 = this.logic();
+		var e2Assembly = this.assembly;
+		this.matchType(':');
+		this.assembly = [];
+		var e3 = this.logic();
+		var e3Assembly = this.assembly;
+		this.assembly = oldAssembly;
+
+		var name = this.no.newTmpName();
+		var bestType = this.no.typeResolution(e2.dtype, e3.dtype);
+		var vari = new Variable(name, bestType, 'tmp', this.no.scope);
+		this.variables.push(vari);
+		
+
+		this.assembly.push('gotoifn ' + e1.name + ' ' + l1);
+		//add e2's assembly first
+		Array.prototype.push.apply(this.assembly, e2Assembly);
+		this.assembly.push('= ' + vari.name + ' ' + e2.name);
+		this.assembly.push('goto ' + l2);
+		this.assembly.push('label ' + l1);
+		Array.prototype.push.apply(this.assembly, e3Assembly);
+		this.assembly.push('= ' + vari.name + ' ' + e3.name);
+		this.assembly.push('label ' + l2);
+
+	}
+	return e1;
+};
+
+Parser.prototype.logic = function(){
+	var e1 = this.bitwise();
+	return this.moreLogic(e1);
+};
+
+Parser.prototype.moreLogic = function(e1){
+	var ops = ['&&', '||'];
+	for(var i = 0; i < ops.length; i++){
+		var op = ops[i];
+		if(this.checkType(op)){
+			this.pop();
+			var e2 = this.bitwise();
+			var name = this.no.newTmpName();
+			var bestType = this.no.typeResolution(e1.dtype, e2.dtype);
+			e1 = this.convertToTypeIfNeccecary(e1, bestType);
+			e2 = this.convertToTypeIfNeccecary(e2, bestType);
+			var vari = new Variable(name, bestType, 'tmp', this.no.scope);
+			this.variables.push(vari);
+			this.assembly.push(op + ' ' + vari.name + ' ' + e1.name + ' ' + e2.name);
+			return this.moreLogic(vari);
+		}
+	}
+	return e1;
+};
+
+
 Parser.prototype.bitwise = function(){
 	var e1 = this.comparators();
 	return this.moreBitwise(e1);

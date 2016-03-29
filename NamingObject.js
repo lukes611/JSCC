@@ -10,6 +10,12 @@ NamingObject.prototype.newTmpName = function(){
 	return rv;
 };
 
+NamingObject.prototype.newTmpLabel = function(){
+	var rv = 'Label' + this.tmpVarNo;
+	this.tmpVarNo++;
+	return rv;
+};
+
 
 NamingObject.prototype.simpleType = function(t){
 	t = t.replace(/ /, '');
