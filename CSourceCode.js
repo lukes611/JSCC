@@ -11,8 +11,8 @@ function CSourceCode(str){
 	this.numbers = '0123456789';
 	this.hexSymbols = '0123456789ABCDEFabcdef';
 	this.singleSymbols = '(){}#.,?:[];';
-	this.doubleSymbols = '+-*/<>!=&|~^';
-	this.doubleOperators = ('++ += -- -= -> / /= *= <= << == >= >> && &= || |= !=' +
+	this.doubleSymbols = '+-*/%<>!=&|~^';
+	this.doubleOperators = ('++ += -- -= -> / /= *= %= <= << == != >= >> && &= || |= !=' +
 	'~= ^=').split(' ');
 
 	this.whiteSpaceSymbols = ' \t\n\r';

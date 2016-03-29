@@ -59,7 +59,107 @@ Parser.prototype.checkType = function(type){
 	return true;
 };
 
+Parser.prototype.bitwise = function(){
+	var e1 = this.comparators();
+	return this.moreBitwise(e1);
+};
 
+Parser.prototype.moreBitwise = function(e1){
+	var ops = ['&', '^', '|'];
+	for(var i = 0; i < ops.length; i++){
+		var op = ops[i];
+		if(this.checkType(op)){
+			this.pop();
+			var e2 = this.comparators();
+			var name = this.no.newTmpName();
+			var bestType = this.no.typeResolution(e1.dtype, e2.dtype);
+			e1 = this.convertToTypeIfNeccecary(e1, bestType);
+			e2 = this.convertToTypeIfNeccecary(e2, bestType);
+			var vari = new Variable(name, bestType, 'tmp', this.no.scope);
+			this.variables.push(vari);
+			this.assembly.push(op + ' ' + vari.name + ' ' + e1.name + ' ' + e2.name);
+			return this.moreComparators(vari);
+		}
+	}
+	return e1;
+};
+
+
+Parser.prototype.comparators = function(){
+	var e1 = this.comparators2();
+	return this.moreComparators(e1);
+};
+
+Parser.prototype.moreComparators = function(e1){
+	var ops = ['==', '!='];
+	for(var i = 0; i < ops.length; i++){
+		var op = ops[i];
+		if(this.checkType(op)){
+			this.pop();
+			var e2 = this.comparators2();
+			var name = this.no.newTmpName();
+			var bestType = this.no.typeResolution(e1.dtype, e2.dtype);
+			e1 = this.convertToTypeIfNeccecary(e1, bestType);
+			e2 = this.convertToTypeIfNeccecary(e2, bestType);
+			var vari = new Variable(name, bestType, 'tmp', this.no.scope);
+			this.variables.push(vari);
+			this.assembly.push(op + ' ' + vari.name + ' ' + e1.name + ' ' + e2.name);
+			return this.moreComparators(vari);
+		}
+	}
+	return e1;
+};
+
+
+Parser.prototype.comparators2 = function(){
+	var e1 = this.shifters();
+	return this.moreComparators2(e1);
+};
+
+Parser.prototype.moreComparators2 = function(e1){
+	var ops = ['<', '>', '<=', '>='];
+	for(var i = 0; i < ops.length; i++){
+		var op = ops[i];
+		if(this.checkType(op)){
+			this.pop();
+			var e2 = this.shifters();
+			var name = this.no.newTmpName();
+			var bestType = this.no.typeResolution(e1.dtype, e2.dtype);
+			e1 = this.convertToTypeIfNeccecary(e1, bestType);
+			e2 = this.convertToTypeIfNeccecary(e2, bestType);
+			var vari = new Variable(name, bestType, 'tmp', this.no.scope);
+			this.variables.push(vari);
+			this.assembly.push(op + ' ' + vari.name + ' ' + e1.name + ' ' + e2.name);
+			return this.moreComparators2(vari);
+		}
+	}
+	return e1;
+};
+
+Parser.prototype.shifters = function(){
+	var e1 = this.adders();
+	return this.moreShifters(e1);
+};
+
+Parser.prototype.moreShifters = function(e1){
+	var ops = ['<<', '>>'];
+	for(var i = 0; i < ops.length; i++){
+		var op = ops[i];
+		if(this.checkType(op)){
+			this.pop();
+			var e2 = this.adders();
+			var name = this.no.newTmpName();
+			var bestType = this.no.typeResolution(e1.dtype, e2.dtype);
+			e1 = this.convertToTypeIfNeccecary(e1, bestType);
+			e2 = this.convertToTypeIfNeccecary(e2, bestType);
+			var vari = new Variable(name, bestType, 'tmp', this.no.scope);
+			this.variables.push(vari);
+			this.assembly.push(op + ' ' + vari.name + ' ' + e1.name + ' ' + e2.name);
+			return this.moreShifters(vari);
+		}
+	}
+	return e1;
+};
 
 Parser.prototype.adders = function(){
 	var e1 = this.factors();
@@ -67,28 +167,21 @@ Parser.prototype.adders = function(){
 };
 
 Parser.prototype.moreAdders = function(e1){
-	if(this.checkType('+')){
-		this.pop();
-		var e2 = this.factors();
-		var name = this.no.newTmpName();
-		var bestType = this.no.typeResolution(e1.dtype, e2.dtype);
-		e1 = this.convertToTypeIfNeccecary(e1, bestType);
-		e2 = this.convertToTypeIfNeccecary(e2, bestType);
-		var vari = new Variable(name, bestType, 'tmp', this.no.scope);
-		this.variables.push(vari);
-		this.assembly.push('+ ' + vari.name + ' ' + e1.name + ' ' + e2.name);
-		return this.moreAdders(vari);
-	}else if(this.checkType('-')){
-		this.pop();
-		var e2 = this.factors();
-		var name = this.no.newTmpName();
-		var bestType = this.no.typeResolution(e1.dtype, e2.dtype);
-		e1 = this.convertToTypeIfNeccecary(e1, bestType);
-		e2 = this.convertToTypeIfNeccecary(e2, bestType);
-		var vari = new Variable(name, bestType, 'tmp', this.no.scope);
-		this.variables.push(vari);
-		this.assembly.push('- ' + vari.name + ' ' + e1.name + ' ' + e2.name);
-		return this.moreAdders(vari); 
+	var ops = ['+', '-'];
+	for(var i = 0; i < ops.length; i++){
+		var op = ops[i];
+		if(this.checkType(op)){
+			this.pop();
+			var e2 = this.factors();
+			var name = this.no.newTmpName();
+			var bestType = this.no.typeResolution(e1.dtype, e2.dtype);
+			e1 = this.convertToTypeIfNeccecary(e1, bestType);
+			e2 = this.convertToTypeIfNeccecary(e2, bestType);
+			var vari = new Variable(name, bestType, 'tmp', this.no.scope);
+			this.variables.push(vari);
+			this.assembly.push(op + ' ' + vari.name + ' ' + e1.name + ' ' + e2.name);
+			return this.moreAdders(vari);
+		}
 	}
 	return e1;
 };
@@ -99,28 +192,21 @@ Parser.prototype.factors = function(){
 };
 
 Parser.prototype.moreFactors = function(e1){
-	if(this.checkType('*')){
-		this.pop();
-		var e2 = this.preElement();
-		var name = this.no.newTmpName();
-		var bestType = this.no.typeResolution(e1.dtype, e2.dtype);
-		e1 = this.convertToTypeIfNeccecary(e1, bestType);
-		e2 = this.convertToTypeIfNeccecary(e2, bestType);
-		var vari = new Variable(name, bestType, 'tmp', this.no.scope);
-		this.variables.push(vari);
-		this.assembly.push('* ' + vari.name + ' ' + e1.name + ' ' + e2.name);
-		return this.moreFactors(vari);
-	}else if(this.checkType('/')){
-		this.pop();
-		var e2 = this.preElement();
-		var name = this.no.newTmpName();
-		var bestType = this.no.typeResolution(e1.dtype, e2.dtype);
-		e1 = this.convertToTypeIfNeccecary(e1, bestType);
-		e2 = this.convertToTypeIfNeccecary(e2, bestType);
-		var vari = new Variable(name, bestType, 'tmp', this.no.scope);
-		this.variables.push(vari);
-		this.assembly.push('/ ' + vari.name + ' ' + e1.name + ' ' + e2.name);
-		return this.moreFactors(vari); 
+	var ops = ['*', '/', '%'];
+	for(var i = 0; i < ops.length; i++){
+		var op = ops[i];
+		if(this.checkType(op)){
+			this.pop();
+			var e2 = this.preElement();
+			var name = this.no.newTmpName();
+			var bestType = this.no.typeResolution(e1.dtype, e2.dtype);
+			e1 = this.convertToTypeIfNeccecary(e1, bestType);
+			e2 = this.convertToTypeIfNeccecary(e2, bestType);
+			var vari = new Variable(name, bestType, 'tmp', this.no.scope);
+			this.variables.push(vari);
+			this.assembly.push(op + ' ' + vari.name + ' ' + e1.name + ' ' + e2.name);
+			return this.moreFactors(vari);
+		}
 	}
 	return e1;
 };
