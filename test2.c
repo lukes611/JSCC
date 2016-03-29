@@ -1,17 +1,5 @@
-
-2<5
-/*
-a ? b : c
-
-tmpVar1
-
-gotoifn a label1
-set tmpVar1 b
-goto label2
-label label1
-set tmpVar1 c
-label label2
-
-
-
-*/
+int a = 5, b = 10, c = 20000*-6;
+double d = 0xFF;
+-2+3;
+b+2;
+d*5*b;

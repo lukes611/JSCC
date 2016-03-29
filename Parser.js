@@ -37,6 +37,10 @@ Parser.prototype.pop = function(){
 	return rv;
 };
 
+Parser.prototype.variableDefined = function(v){
+	for(var i = 0; i < this.variables.length; i++) if(this.variables[i].eq(v)) return true;
+	return false;
+};
 
 Parser.prototype.error = function(str){
 	console.log('error' + str);
@@ -59,6 +63,51 @@ Parser.prototype.checkType = function(type){
 	return true;
 };
 
+Parser.prototype.stmt = function(){
+	if(this.top() == undefined) return false;
+	if(this.top().type == 'TYPE'){
+		this.initializer();
+		this.matchType(';');
+		return true;
+	}else if(('int,double,float,char,string,short,hex,name,-,!'.split(',')).indexOf(this.top().type) != -1){
+		this.rhs();
+		this.matchType(';');
+		return true;
+	}else if(this.top().type == ';') return true;
+	return false;
+};
+
+Parser.prototype.initializer = function(){
+	var t = this.top();
+	if(t.type != 'TYPE') return;
+	this.pop();
+	this.moreInitializers(t);
+};
+
+Parser.prototype.moreInitializers = function(t){
+	var variLex = this.matchType('name');
+	var vari = new Variable(variLex.str, t.str, 'user', this.no.scope, undefined, variLex.locations);
+	if(this.variableDefined(vari)){
+		this.error('error on line: ' + variLex.locations[1].line + ', variable name ' + vari.name + ' was already defined');
+	}
+	this.variables.push(vari);
+	if(this.checkType('=')){
+		this.pop();
+		var rh = this.rhs();
+		var bestType = vari.dtype;
+		rh = this.convertToTypeIfNeccecary(rh, bestType);
+		this.assembly.push('= ' + vari.name + ' ' + rh.name);
+	}
+	if(this.checkType(',')){
+		this.pop();
+		this.moreInitializers(t);
+	}
+};
+
+Parser.prototype.rhs = function(){
+	return this.ternary();
+};
+
 Parser.prototype.ternary = function(){
 	var e1 = this.logic();
 	if(this.checkType('?')){
@@ -77,6 +126,8 @@ Parser.prototype.ternary = function(){
 
 		var name = this.no.newTmpName();
 		var bestType = this.no.typeResolution(e2.dtype, e3.dtype);
+		e2 = this.convertToTypeIfNeccecary(e2, bestType);
+		e3 = this.convertToTypeIfNeccecary(e3, bestType);
 		var vari = new Variable(name, bestType, 'tmp', this.no.scope);
 		this.variables.push(vari);
 		
@@ -337,9 +388,17 @@ Parser.prototype.element = function(){
 		this.variables.push(vari);
 		return vari;
 	}else if(e.type == 'name'){
-		this.error('found name... need to implement finding name in variable list');
-		return e;
+		return this.names(e);
 	}
+};
+
+Parser.prototype.names = function(e){
+	var vari = new Variable(e.str, undefined, 'user', this.no.scope, undefined, e.locations);
+	if(!this.variableDefined(vari)) this.error(' variable ' + vari.name + ' is not defined but is referenced');
+	for(var i = 0; i < this.variables.length; i++){
+		if(this.variables[i].eq(vari)) return this.variables[i];
+	}
+	this.error(' variable ' + vari.name + ' is not defined but is referenced');
 };
 
 module.exports = Parser;

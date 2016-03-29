@@ -7,8 +7,8 @@ var lx = new LexicalAnalyser(code);
 var parser = new Parser(lx.compute());
 //parser.printLexicons();
 
-if(parser.l.length != 0)
-	parser.ternary();
+while(parser.stmt()) ;
+	
 
 console.log(parser.toString());
 
