@@ -6,8 +6,10 @@ var assert = require('assert');
 function Parser(lexiList){
 	this.l = lexiList;
 	this.variables = [];
+	this.dvariables = [];
 	this.assembly = [];
 	this.no = new NamingObject;
+	this.scope = 'global';
 }
 
 //a function to print out the lexicons in order
@@ -18,8 +20,11 @@ Parser.prototype.printLexicons = function(){
 };
 
 Parser.prototype.toString = function(){
-	var st = 'VARIABLES:\n';
-	this.variables.forEach(function(x){st += x.toString() + '\n';});
+	var st = 'DVARS:\n';
+	var f1 = function(x){ st += x.toString() + '\n'; };
+	this.dvariables.forEach(f1);
+	st += 'VARIABLES:\n';
+	this.variables.forEach(f1);
 	st += 'CODE:\n';
 	this.assembly.forEach(function(x){st += x + '\n'; });
 	return st;
@@ -377,18 +382,6 @@ Parser.prototype.preElement = function(){
 	}
 };
 
-Parser.prototype.convertToType = function(inp, type){
-	var name = this.no.newTmpName();
-	var vari = new Variable(name, type, 'tmp', this.no.scope, undefined, 1);
-	this.variables.push(vari);
-	this.assembly.push('convertTo ' + type + ' from ' + inp.dtype + ' ' + vari.name + ' ' + inp.name);
-	return vari;
-};
-
-Parser.prototype.convertToTypeIfNeccecary = function(inp, type){
-	if(inp.dtype != type) return this.convertToType(inp, type);
-	return inp;
-};
 
 Parser.prototype.element = function(){
 	var e = this.pop();
@@ -412,6 +405,31 @@ Parser.prototype.names = function(e){
 	this.error(' variable ' + vari.name + ' is not defined but is referenced');
 };
 
+
+Parser.prototype.convertToType = function(inp, type){
+	var name = this.no.newTmpName();
+	var vari = new Variable(name, type, 'tmp', this.no.scope, undefined, 1);
+	this.variables.push(vari);
+	this.assembly.push('convertTo ' + type + ' from ' + inp.dtype + ' ' + vari.name + ' ' + inp.name);
+	return vari;
+};
+
+Parser.prototype.convertToTypeIfNeccecary = function(inp, type){
+	if(inp.dtype != type) return this.convertToType(inp, type);
+	return inp;
+};
+
+Parser.prototype.newTmpVar = function(dtype, loc){
+	return new Variable(this.no.newTmpVar(), dtype, this.scope, false, true, loc);
+};
+
+Parser.prototype.newRefVar = function(dtype, loc){
+	return new Variable(this.no.newTmpVar(), dtype, this.scope, true, true, loc);
+};
+
+Parser.prototype.newUserVar = function(name, dtype, isRef, loc){
+	return new Variable(name, dtype, this.scope, isRef, false, loc);
+};
 
 
 module.exports = Parser;

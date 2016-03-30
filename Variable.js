@@ -1,19 +1,29 @@
-function Variable(name, dtype, type, scope, value, count, locations){
+/*
+has Variable object:
+	name, dtype, scope, isGlobal, isReference, isTemporaryVariable, location 
+has data object:
+	name, dtype, scope, size, locationInMemory
+
+*/
+
+function Variable(name, dtype, scope, isReference, isTemporaryVariable, codeLocations){
 	this.name = name;
 	this.dtype = dtype;
-	this.type = type;
 	this.scope = scope;
-	this.value = value;
-	this.count = count;
-	this.locations = locations;
+	this.isReference = isReference;
+	this.isGlobal = this.scope == 'global';
+	this.isTemporaryVariable = isTemporaryVariable;
+	this.codeLocations = codeLocations;
 }
 
 Variable.prototype.toString = function(){
-	return this.dtype + " " +  this.name + ' in ' + this.scope + ' = ' + this.type + ': ' + this.value + ' count: ' + this.count;
+	return this.name + ' of type ' + this.dtype + ' in ' + this.scope + ' ref/tmp(' + 
+	this.isReference + ',' + this.isTemporaryVariable + ')';
 };
 
 Variable.prototype.eq = function(v2){
-	return this.name == v2.name && this.scope == v2.scope && this.type == v2.type;
+	return this.name == v2.name && this.scope == v2.scope &&
+	this.isReference == v2.isReference && this.isTemporaryVariable == v2.isTemporaryVariable;
 };
 
 
