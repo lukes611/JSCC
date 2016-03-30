@@ -32,4 +32,11 @@ NamingObject.prototype.typeResolution = function(t1, t2){
 	return t2;
 };
 
+NamingObject.prototype.typeSize = function(t){
+	var tps = 'double,float,int,short,char'.split(',');
+	var ind = tps.indexOf(t);
+	if(ind == -1) return 4;
+	return [8,4,4,2,1][ind];
+};
+
 module.exports = NamingObject;

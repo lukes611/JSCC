@@ -86,7 +86,18 @@ Parser.prototype.initializer = function(){
 
 Parser.prototype.moreInitializers = function(t){
 	var variLex = this.matchType('name');
-	var vari = new Variable(variLex.str, t.str, 'user', this.no.scope, undefined, variLex.locations);
+	var vari;
+	if(this.top().type == '['){
+		this.pop();
+		var i = this.matchType('int');
+		var name = this.no.newTmpName();
+		var constant = new Variable(name, t.str, 'constant', this.no.scope, undefined, Number(i.str), variLex.locations);
+		vari = new Variable(variLex.str, t.str+'*', 'user', this.no.scope, undefined, 1, variLex.locations);
+		this.matchType(']');
+		this.assembly.push('= ' + vari.name + ' ' + constant.name);
+		this.variables.push(constant);
+	}else
+		vari = new Variable(variLex.str, t.str, 'user', this.no.scope, undefined, 1, variLex.locations);
 	if(this.variableDefined(vari)){
 		this.error('error on line: ' + variLex.locations[1].line + ', variable name ' + vari.name + ' was already defined');
 	}
@@ -128,7 +139,7 @@ Parser.prototype.ternary = function(){
 		var bestType = this.no.typeResolution(e2.dtype, e3.dtype);
 		e2 = this.convertToTypeIfNeccecary(e2, bestType);
 		e3 = this.convertToTypeIfNeccecary(e3, bestType);
-		var vari = new Variable(name, bestType, 'tmp', this.no.scope);
+		var vari = new Variable(name, bestType, 'tmp', this.no.scope, undefined, 1);
 		this.variables.push(vari);
 		
 
@@ -162,7 +173,7 @@ Parser.prototype.moreLogic = function(e1){
 			var bestType = this.no.typeResolution(e1.dtype, e2.dtype);
 			e1 = this.convertToTypeIfNeccecary(e1, bestType);
 			e2 = this.convertToTypeIfNeccecary(e2, bestType);
-			var vari = new Variable(name, bestType, 'tmp', this.no.scope);
+			var vari = new Variable(name, bestType, 'tmp', this.no.scope, undefined, 1);
 			this.variables.push(vari);
 			this.assembly.push(op + ' ' + vari.name + ' ' + e1.name + ' ' + e2.name);
 			return this.moreLogic(vari);
@@ -188,7 +199,7 @@ Parser.prototype.moreBitwise = function(e1){
 			var bestType = this.no.typeResolution(e1.dtype, e2.dtype);
 			e1 = this.convertToTypeIfNeccecary(e1, bestType);
 			e2 = this.convertToTypeIfNeccecary(e2, bestType);
-			var vari = new Variable(name, bestType, 'tmp', this.no.scope);
+			var vari = new Variable(name, bestType, 'tmp', this.no.scope, undefined, 1);
 			this.variables.push(vari);
 			this.assembly.push(op + ' ' + vari.name + ' ' + e1.name + ' ' + e2.name);
 			return this.moreBitwise(vari);
@@ -214,7 +225,7 @@ Parser.prototype.moreComparators = function(e1){
 			var bestType = this.no.typeResolution(e1.dtype, e2.dtype);
 			e1 = this.convertToTypeIfNeccecary(e1, bestType);
 			e2 = this.convertToTypeIfNeccecary(e2, bestType);
-			var vari = new Variable(name, bestType, 'tmp', this.no.scope);
+			var vari = new Variable(name, bestType, 'tmp', this.no.scope, undefined, 1);
 			this.variables.push(vari);
 			this.assembly.push(op + ' ' + vari.name + ' ' + e1.name + ' ' + e2.name);
 			return this.moreComparators(vari);
@@ -240,7 +251,7 @@ Parser.prototype.moreComparators2 = function(e1){
 			var bestType = this.no.typeResolution(e1.dtype, e2.dtype);
 			e1 = this.convertToTypeIfNeccecary(e1, bestType);
 			e2 = this.convertToTypeIfNeccecary(e2, bestType);
-			var vari = new Variable(name, bestType, 'tmp', this.no.scope);
+			var vari = new Variable(name, bestType, 'tmp', this.no.scope, undefined, 1);
 			this.variables.push(vari);
 			this.assembly.push(op + ' ' + vari.name + ' ' + e1.name + ' ' + e2.name);
 			return this.moreComparators2(vari);
@@ -265,7 +276,7 @@ Parser.prototype.moreShifters = function(e1){
 			var bestType = this.no.typeResolution(e1.dtype, e2.dtype);
 			e1 = this.convertToTypeIfNeccecary(e1, bestType);
 			e2 = this.convertToTypeIfNeccecary(e2, bestType);
-			var vari = new Variable(name, bestType, 'tmp', this.no.scope);
+			var vari = new Variable(name, bestType, 'tmp', this.no.scope, undefined, 1);
 			this.variables.push(vari);
 			this.assembly.push(op + ' ' + vari.name + ' ' + e1.name + ' ' + e2.name);
 			return this.moreShifters(vari);
@@ -290,7 +301,7 @@ Parser.prototype.moreAdders = function(e1){
 			var bestType = this.no.typeResolution(e1.dtype, e2.dtype);
 			e1 = this.convertToTypeIfNeccecary(e1, bestType);
 			e2 = this.convertToTypeIfNeccecary(e2, bestType);
-			var vari = new Variable(name, bestType, 'tmp', this.no.scope);
+			var vari = new Variable(name, bestType, 'tmp', this.no.scope, undefined, 1);
 			this.variables.push(vari);
 			this.assembly.push(op + ' ' + vari.name + ' ' + e1.name + ' ' + e2.name);
 			return this.moreAdders(vari);
@@ -315,7 +326,7 @@ Parser.prototype.moreFactors = function(e1){
 			var bestType = this.no.typeResolution(e1.dtype, e2.dtype);
 			e1 = this.convertToTypeIfNeccecary(e1, bestType);
 			e2 = this.convertToTypeIfNeccecary(e2, bestType);
-			var vari = new Variable(name, bestType, 'tmp', this.no.scope);
+			var vari = new Variable(name, bestType, 'tmp', this.no.scope, undefined, 1);
 			this.variables.push(vari);
 			this.assembly.push(op + ' ' + vari.name + ' ' + e1.name + ' ' + e2.name);
 			return this.moreFactors(vari);
@@ -333,7 +344,7 @@ Parser.prototype.preElement = function(){
 		this.pop();
 		var rv = this.element();
 		var name = this.no.newTmpName();
-		var vari = new Variable(name, rv.dtype, 'tmp', this.no.scope);
+		var vari = new Variable(name, rv.dtype, 'tmp', this.no.scope, undefined, 1);
 		this.variables.push(vari);
 		this.assembly.push('invert ' + vari.name + ' ' + rv.name);
 		return vari;
@@ -341,7 +352,7 @@ Parser.prototype.preElement = function(){
 		this.pop();
 		var rv = this.element();
 		var name = this.no.newTmpName();
-		var vari = new Variable(name, rv.dtype, 'tmp', this.no.scope);
+		var vari = new Variable(name, rv.dtype, 'tmp', this.no.scope, undefined, 1);
 		this.variables.push(vari);
 		this.assembly.push('! ' + vari.name + ' ' + rv.name);
 		return vari;
@@ -351,7 +362,7 @@ Parser.prototype.preElement = function(){
 		this.pop();
 		var rv = this.element();
 		var name = this.no.newTmpName();
-		var vari = new Variable(name, rv.dtype, 'tmp', this.no.scope);
+		var vari = new Variable(name, rv.dtype, 'tmp', this.no.scope, undefined, 1);
 		this.variables.push(vari);
 		this.assembly.push('~ ' + vari.name + ' ' + rv.name);
 		return vari;
@@ -368,7 +379,7 @@ Parser.prototype.preElement = function(){
 
 Parser.prototype.convertToType = function(inp, type){
 	var name = this.no.newTmpName();
-	var vari = new Variable(name, type, 'tmp', this.no.scope);
+	var vari = new Variable(name, type, 'tmp', this.no.scope, undefined, 1);
 	this.variables.push(vari);
 	this.assembly.push('convertTo ' + type + ' from ' + inp.dtype + ' ' + vari.name + ' ' + inp.name);
 	return vari;
@@ -384,7 +395,7 @@ Parser.prototype.element = function(){
 	var types = 'int,double,float,char,string,short,hex'.split(',');
 	if(types.indexOf(e.type) != -1){
 		var name = this.no.newTmpName();
-		var vari = new Variable(name, e.type, 'constant', this.no.scope, e.str, e.locations);
+		var vari = new Variable(name, e.type, 'constant', this.no.scope, e.str, 1, e.locations);
 		this.variables.push(vari);
 		return vari;
 	}else if(e.type == 'name'){
@@ -393,12 +404,14 @@ Parser.prototype.element = function(){
 };
 
 Parser.prototype.names = function(e){
-	var vari = new Variable(e.str, undefined, 'user', this.no.scope, undefined, e.locations);
+	var vari = new Variable(e.str, undefined, 'user', this.no.scope, undefined, 1, e.locations);
 	if(!this.variableDefined(vari)) this.error(' variable ' + vari.name + ' is not defined but is referenced');
 	for(var i = 0; i < this.variables.length; i++){
 		if(this.variables[i].eq(vari)) return this.variables[i];
 	}
 	this.error(' variable ' + vari.name + ' is not defined but is referenced');
 };
+
+
 
 module.exports = Parser;
