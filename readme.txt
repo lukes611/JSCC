@@ -1,9 +1,13 @@
-JSCC - a basic C compiler written in JavaScript for the node.js environment
+JSCC - a basic C compiler written in JavaScript
 to do:
-lexicon compiler
-syntax tree
-name mapper
-real time engine
+Parser -
+	array indexing 
+	if else
+	for while
+	functions
+	structs
+	struct member variable calling
+
 
 shortcomings: no do while, no preprocessor definitions,
 except #include "blah" or #include <blah>
@@ -42,8 +46,8 @@ double operators:
 
 
 
-1. Source Code Reading
-2. Lexical Analysis
+1. Source Code Reading [done]
+2. Lexical Analysis [done]
 3. Parsing
 			a. assembler T0: simplify, one liners -> must keep to and from of the lexicons
 				+ scope and variable tracking and checking:

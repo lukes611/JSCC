@@ -226,8 +226,9 @@ Parser.prototype.preElement = function(){
 	}else if(this.checkType('*')){
 		var lex = this.pop();
 		var rv = this.element();
-		if(rv.type != 'user') this.error('attempting to de-reference a variable');
+		if(rv.type != 'user' && !rv.isPtr()) this.error('illegal de-reference of a variable');
 		var vari = this.newRefVar(rv.dtype, lex.locations);
+		vari.dref();
 		this.addAssembly('deref', vari.name, rv.name);
 		return vari;
 	}else if(this.checkType('~')){
@@ -293,19 +294,19 @@ Parser.prototype.moreFunctionAssignment = function(e1, ops, nextFunction){
 	for(var i = 0; i < ops.length; i++){
 		var op = ops[i];
 		if(this.checkType(op)){
-			if(e1.type != 'user') this.error('error, assigning to a non variable');
+			if(e1.type != 'user' && e1.type != 'ref') this.error('error, assigning to a non variable');
 			var lex = this.pop();
 			var e2 = this[nextFunction]();
-			var bestType = this.no.typeResolution(e1.dtype, e2.dtype);
-			e1 = this.convertToTypeIfNeccecary(e1, bestType);
-			e2 = this.convertToTypeIfNeccecary(e2, bestType);
-			var vari = this.newTmpVar(bestType, lex.locations);
-			this.addAssembly(op, vari.name, e1.name, e2.name);
+			var bt = this.possibleTypeConversion(e1, e2);
+			var vari = this.newTmpVar(bt.bestType, lex.locations);
+			this.addAssembly(op, vari.name, bt.e1.name, bt.e2.name);
 			return this.moreFunction(vari, ops, nextFunction);
 		}
 	}
 	return e1;	
 };
+
+
 
 
 Parser.prototype.convertToType = function(inp, type){
@@ -314,6 +315,17 @@ Parser.prototype.convertToType = function(inp, type){
 	this.variables.push(vari);
 	this.assembly.push('convertTo ' + type + ' from ' + inp.dtype + ' ' + vari.name + ' ' + inp.name);
 	return vari;
+};
+
+Parser.prototype.possibleTypeConversion = function(e1, e2){
+	var bestType = e1.bestConversion(e2);
+	if(bestType === undefined) this.error('Warning: Cannot convert ' + e1.dtype + ' and ' +
+		e2.dtype + ' to common type');
+	return {
+		"bestType": bestType,
+		"e1": this.convertToTypeIfNeccecary(e1, bestType),
+		"e2": this.convertToTypeIfNeccecary(e2, bestType)
+	};
 };
 
 Parser.prototype.convertToTypeIfNeccecary = function(inp, type){
