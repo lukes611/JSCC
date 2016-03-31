@@ -213,10 +213,12 @@ LexicalAnalyser.prototype.step = function(x){
 		}else{
 			var index = sc.doubleOperators.indexOf(version2);
 			if(index == -1){
-				x.lexicon = new Lexicon(c, c, x.location, x.location);
+				x.lexicon = new Lexicon('/', '/', x.location, x.location);
+				x.state = 0;
 				return;
 			}else{
 				x.lexicon = new Lexicon(version2, version2, x.location, sc.getLocation());
+				x.state = 0;
 			}
 		}
 	}else if(x.state == 15){//continue until new line character read

@@ -1,11 +1,22 @@
-int a = 5, b = 10, c = 20000*-6;
-double d = 0xFF;
--2+3;
-b+2;
-d*5*b;
-int cc[20];
-
+int a = 5;
+6*(a+=65);
 /*
+int a = 5;
+int b = a;
+int p[4];
+int * ap = &a;
+
+p[1] = a;
+p[2] = *ap;
+int * x = p+3;
+*x = 90;
+
+[a, p, p, p, p, ap, x]
+= a 5
+= b a
+ref tmp a
+= ap tmp
+ref tmp2 p 2
 
 
 
