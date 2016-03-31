@@ -82,7 +82,7 @@ Parser.prototype.stmt = function(){
 		this.initializer();
 		this.matchType(';');
 		return true;
-	}else if(('int,double,float,char,string,short,hex,name,-,!'.split(',')).indexOf(this.top().type) != -1){
+	}else if(('int,double,float,char,string,short,hex,name,-,!,&,*'.split(',')).indexOf(this.top().type) != -1){
 		this.rhs();
 		this.matchType(';');
 		return true;
@@ -218,7 +218,18 @@ Parser.prototype.preElement = function(){
 		this.addAssembly('!', vari.name, rv.name);
 		return vari;
 	}else if(this.checkType('&')){
-		//to do
+		var lex = this.pop();
+		var rv = this.element();
+		var vari = this.newTmpVar(rv.dtype+'*', lex.locations);
+		this.addAssembly('ref', vari.name, rv.name);
+		return vari;
+	}else if(this.checkType('*')){
+		var lex = this.pop();
+		var rv = this.element();
+		if(rv.type != 'user') this.error('attempting to de-reference a variable');
+		var vari = this.newRefVar(rv.dtype, lex.locations);
+		this.addAssembly('deref', vari.name, rv.name);
+		return vari;
 	}else if(this.checkType('~')){
 		var lex = this.pop();
 		var rv = this.element();

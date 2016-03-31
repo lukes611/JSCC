@@ -1,5 +1,6 @@
 int a = 5;
-6*(a+=65);
+int* b = &a;
+*b + 5;
 /*
 int a = 5;
 int b = a;
