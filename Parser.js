@@ -82,7 +82,7 @@ Parser.prototype.stmt = function(){
 		this.initializer();
 		this.matchType(';');
 		return true;
-	}else if(('int,double,float,char,string,short,hex,name,-,!,&,*'.split(',')).indexOf(this.top().type) != -1){
+	}else if(('int,double,float,char,string,short,hex,name,-,!,&,*,('.split(',')).indexOf(this.top().type) != -1){
 		this.rhs();
 		this.matchType(';');
 		return true;
@@ -267,7 +267,6 @@ Parser.prototype.element = function(){
 Parser.prototype.existingVariable = function(e){
 	if(e === undefined) e = this.matchType('name');
 	var vari = new Variable(e.str, undefined, this.scope, 'user', undefined, undefined);
-	console.log(vari,this.variables[0]);
 	var index = this.getDefinedVariable(vari);
 	if(index == -1) this.error(' variable ' + vari.name + ' is not defined but is referenced');
 	return this.variables[index];
@@ -279,11 +278,9 @@ Parser.prototype.moreFunction = function(e1, ops, nextFunction){
 		if(this.checkType(op)){
 			var lex = this.pop();
 			var e2 = this[nextFunction]();
-			var bestType = this.no.typeResolution(e1.dtype, e2.dtype);
-			e1 = this.convertToTypeIfNeccecary(e1, bestType);
-			e2 = this.convertToTypeIfNeccecary(e2, bestType);
-			var vari = this.newTmpVar(bestType, lex.locations);
-			this.addAssembly(op, vari.name, e1.name, e2.name);
+			var bt = this.possibleTypeConversion(e1, e2);
+			var vari = this.newTmpVar(bt.bestType, lex.locations);
+			this.addAssembly(op, vari.name, bt.e1.name, bt.e2.name);
 			return this.moreFunction(vari, ops, nextFunction);
 		}
 	}

@@ -1,6 +1,6 @@
 int a = 5;
 int* b = &a;
-2+b;
+*(2+b);
 /*
 int a = 5;
 int b = a;
