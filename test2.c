@@ -1,6 +1,8 @@
-int a = 5;
-int* b = &a;
-*(2+b);
+int a[200];
+a[0] = 5;
+
+
+
 /*
 int a = 5;
 int b = a;

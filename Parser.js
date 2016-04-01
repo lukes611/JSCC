@@ -255,7 +255,7 @@ Parser.prototype.element = function(){
 	if(types.indexOf(e.type) != -1)
 		return this.newDataVar(e.type, e.str, e.locations);
 	else if(e.type == 'name')
-		return this.existingVariable(e);
+		return this.postNamedVariable(this.existingVariable(e));
 	else if(e.type == '('){
 		var rv = this.rhs();
 		this.matchType(')');
@@ -270,6 +270,23 @@ Parser.prototype.existingVariable = function(e){
 	var index = this.getDefinedVariable(vari);
 	if(index == -1) this.error(' variable ' + vari.name + ' is not defined but is referenced');
 	return this.variables[index];
+};
+
+Parser.prototype.postNamedVariable = function(e1){
+	var e = this.top();
+	if(e.type == '['){
+		this.matchType('[');
+		var e2 = this.rhs();
+		this.matchType(']');
+		var bt = this.possibleTypeConversion(e1, e2);
+		var vari = this.newTmpVar(bt.bestType, e.locations);
+		this.addAssembly('+',vari.name,bt.e1.name, bt.e2.name);
+		var vari2 = this.newRefVar(vari.dtype, e.locations);
+		vari2.dref();
+		this.addAssembly('deref', vari2.name, vari.name);
+		return vari2;
+	}
+	return e1;
 };
 
 Parser.prototype.moreFunction = function(e1, ops, nextFunction){
