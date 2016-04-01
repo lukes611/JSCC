@@ -26,8 +26,9 @@ Variable.prototype.eq = function(v2){
 	return this.name == v2.name && this.scope == v2.scope && this.type == v2.type;
 };
 
+
 Variable.prototype.eqGlobal = function(v2){ return this.name == v2.name && this.type == v2.type &&
-	(this.scope == 'global' || v2.scope == 'global'); };
+	(this.scope == 'global'); };
 
 Variable.prototype.sameDType = function(v2){ return this.dtype == v2.dtype; };
 

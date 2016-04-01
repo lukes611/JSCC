@@ -52,8 +52,15 @@ Parser.prototype.pop = function(){
 
 Parser.prototype.getDefinedVariable = function(v){
 	for(var i = 0; i < this.variables.length; i++) if(this.variables[i].eq(v)) return i;
+	for(var i = 0; i < this.variables.length; i++) if(this.variables[i].eqGlobal(v)) return i;
 	return -1;
 };
+
+Parser.prototype.variableExistsInScope = function(v){
+	for(var i = 0; i < this.variables.length; i++) if(this.variables[i].eq(v)) return i;
+	return -1;
+};
+
 
 Parser.prototype.error = function(str){
 	console.log('error' + str);
@@ -76,18 +83,83 @@ Parser.prototype.checkType = function(type, index){
 	return true;
 };
 
+Parser.prototype.multiStmt = function(){
+	while(this.stmt()) ;
+};
+
 Parser.prototype.stmt = function(){
 	if(this.top() == undefined) return false;
+	if(this.top().type == '}') return false;
 	if(this.top().type == 'TYPE'){
 		this.initializer();
 		this.matchType(';');
 		return true;
 	}else if(('int,double,float,char,string,short,hex,name,-,!,&,*,('.split(',')).indexOf(this.top().type) != -1){
 		this.rhs();
+		this.moreRHS();
 		this.matchType(';');
 		return true;
 	}else if(this.top().type == ';') return true;
+	else if(this.top().type == 'if') this.ifStmt();
+	else if(this.top().type == '{'){
+		this.matchType('{');
+		var oldScope = this.scope;
+		this.scope += this.no.newTmpName();
+		this.addAssembly('changeScope', this.scope);
+		this.multiStmt();
+		this.matchType('}');
+		this.scope = oldScope;
+		this.addAssembly('changeScope', this.scope);
+		return true;
+	}
 	return false;
+};
+
+Parser.prototype.ifStmt = function(){
+	this.matchType('if');
+	this.matchType('(');
+	var e1 = this.rhs();
+	this.matchType(')');
+	var endLabel = this.no.newTmpLabel();
+	var l1 = this.no.newTmpLabel();
+
+	this.addAssembly('ifngoto', e1.name, l1);
+	if(!this.stmt()) this.error('error in if statement');
+	this.addAssembly('goto', endLabel);
+	this.addAssembly('label', l1);
+
+	this.moreIf(endLabel);
+};
+
+Parser.prototype.moreIf = function(endLabel){
+	if(this.top() === undefined) return this.addAssembly('label', endLabel);	
+	if(this.top().type == 'else'){
+		this.pop();
+		if(this.top().type == 'if'){
+			this.pop();
+			this.matchType('(');
+			var e1 = this.rhs();
+			this.matchType(')');
+			var l1 = this.no.newTmpLabel();
+			this.addAssembly('ifngoto', e1.name, l1);
+			if(!this.stmt()) this.error('error in else statement');
+			this.addAssembly('goto', endLabel);
+			this.addAssembly('label', l1);
+			this.moreIf(endLabel);
+		}else{
+			if(!this.stmt()) this.error('error in else statement');
+			this.addAssembly('label', endLabel);	
+		}
+	}else this.addAssembly('label', endLabel);
+
+};
+
+Parser.prototype.moreRHS = function(){
+	if(this.top().type == ','){
+		this.pop();
+		this.rhs();
+		this.moreRHS();
+	}
 };
 
 Parser.prototype.initializer = function(){
@@ -374,7 +446,7 @@ Parser.prototype.newRefVar = function(dtype, loc){
 
 Parser.prototype.newUserVar = function(name, dtype, loc){
 	var rv = new Variable(name, dtype, this.scope, 'user', undefined, loc);
-	if(this.getDefinedVariable(rv)!=-1) this.error('Error, variable: ' + name + ' has already been defined on line ' + loc);
+	if(this.variableExistsInScope(rv)!=-1) this.error('Error, variable: ' + name + ' has already been defined on line ' + loc);
 	this.variables.push(rv);
 	return rv;
 };

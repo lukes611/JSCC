@@ -1,7 +1,6 @@
 JSCC - a basic C compiler written in JavaScript
 to do:
 Parser -
-	array indexing 
 	if else
 	for while
 	functions
