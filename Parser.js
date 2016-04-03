@@ -10,6 +10,8 @@ function Parser(lexiList){
 	this.assembly = [];
 	this.no = new NamingObject;
 	this.scope = 'global';
+	this.continueLabel = undefined;
+	this.breakLabel = undefined;
 }
 
 //a function to print out the lexicons in order
@@ -100,8 +102,10 @@ Parser.prototype.stmt = function(){
 		this.matchType(';');
 		return true;
 	}else if(this.top().type == ';') return true;
-	else if(this.top().type == 'if') this.ifStmt();
-	else if(this.top().type == '{'){
+	else if(this.top().type == 'if'){
+		this.ifStmt();
+		return true;
+	}else if(this.top().type == '{'){
 		this.matchType('{');
 		var oldScope = this.scope;
 		this.scope += this.no.newTmpName();
@@ -111,8 +115,70 @@ Parser.prototype.stmt = function(){
 		this.scope = oldScope;
 		this.addAssembly('changeScope', this.scope);
 		return true;
+	}else if(this.top().type == 'for'){
+		this.forStmt();
+		return true;
+	}else if(this.checkType('break')){
+		if(this.breakLabel === undefined) this.error('warning, using break statement in incorrect spot');
+		this.pop();
+		this.matchType(';');
+		this.addAssembly('goto', this.breakLabel);
+		return true;
+	}else if(this.checkType('continue')){
+		if(this.breakLabel === undefined) this.error('warning, using continue statement in incorrect spot');
+		this.pop();
+		this.matchType(';');
+		this.addAssembly('goto', this.continueLabel);
+		return true;
 	}
 	return false;
+};
+
+Parser.prototype.forStmt = function(){
+	this.pop(); //pop for
+	this.matchType('(');
+	var forLoopStart = this.no.newTmpLabel();
+	var a = undefined, b = undefined, c = undefined;
+	if(!this.checkType(';')){
+		a = this.rhsMore();
+	}
+
+	this.addAssembly('label', forLoopStart);
+	this.matchType(';');
+	var oldAssembly = this.assembly;
+	this.assembly = [];
+	if(!this.checkType(';')){
+		b = this.rhs();
+	}
+	this.matchType(';');
+	var BAssembly = this.assembly;
+	this.assembly = [];
+	
+	if(!this.checkType(')')){
+		c = this.rhsMore();
+	}
+	var CAssembly = this.assembly;
+	this.assembly = oldAssembly;
+	this.matchType(')');
+	
+	var oldBreakLabel = this.breakLabel;
+	var oldContinueLabel = this.continueLabel;
+	this.continueLabel = this.no.newTmpLabel();
+	this.breakLabel = this.no.newTmpLabel();
+
+	if(!this.stmt()) this.error('error in stmt() in for loop!'); //got d
+	
+	this.addAssembly('label', this.continueLabel);
+
+	Array.prototype.push.apply(this.assembly, CAssembly);
+
+	Array.prototype.push.apply(this.assembly, BAssembly);
+	if(b !== undefined) this.addAssembly('ifgoto', b.name, forLoopStart);
+	else this.addAssembly('goto', forLoopStart);
+	this.addAssembly('label', this.breakLabel);
+
+	this.breakLabel = oldBreakLabel;
+	this.continueLabel = oldContinueLabel;
 };
 
 Parser.prototype.ifStmt = function(){
@@ -198,6 +264,12 @@ Parser.prototype.moreInitializers = function(t){
 Parser.prototype.rhs = function(){
 	return this.assignment();
 };
+
+Parser.prototype.rhsMore = function(){
+	this.assignment();
+	this.moreRHS();
+};
+
 
 Parser.prototype.assignment = function(){
 	var e1 = this.ternary();

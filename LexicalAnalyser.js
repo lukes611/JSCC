@@ -259,7 +259,7 @@ LexicalAnalyser.prototype.compute = function(){
 //check a string input for it's type
 LexicalAnalyser.prototype.interpretString = function(str){
 	var types = 'double,int,char,void,struct,short,float,union'.split(',');
-	var selfDescribers = 'for while if else switch return'.split(' ');
+	var selfDescribers = 'for while if else return continue break'.split(' ');
 	if(types.indexOf(str) != -1) return 'TYPE';
 	else if(selfDescribers.indexOf(str) != -1) return '' + str;
 	else if(str == 'unsigned') return 'MODIFIER';
