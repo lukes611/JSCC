@@ -1,26 +1,21 @@
-int a = 1, count = 0, to = 15;
-
-while(1){
-	if(count % 2 == 0) continue;
-	a *= 10;
-	count += 1;
-	if(count >= to) break;
+int a, b= 1;
+for(a = 0; a < 10; a++){
+	b + 10;
 }
 
 /*
-while(a) b
+for(a;b;c) d
 
-goto Test
-label whileStart
+a
+label restart
 b's assembly
-label Test
-a's assembly
-ifngoto a endLabel
-goto whileStart
-label endLabel
+ifngoto b end
+d's assembly
+label cont
+c's assembly
+goto restart
+label end
 
-
-continue goes to Test
-break goes to endLabel
-
+continue goes to cont
+break goes to end
 */

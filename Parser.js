@@ -464,6 +464,14 @@ Parser.prototype.postNamedVariable = function(e1){
 		vari2.dref();
 		this.addAssembly('deref', vari2.name, vari.name);
 		return vari2;
+	}else if(e.type == '++' || e.type == '--'){
+		this.matchType(e.type);
+		if(e1.dtype != 'int' && !e1.isPtr())
+			this.error('warning, attempting to increment a non integer type / non pointer type');
+		var e2 = this.newTmpVar(e1.dtype, e.locations);
+		this.addAssembly('=', e2.name, e1.name);
+		this.addAssembly(e.type, e1.name);
+		return e2;
 	}
 	return e1;
 };
