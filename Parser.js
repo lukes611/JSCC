@@ -109,11 +109,11 @@ Parser.prototype.stmt = function(){
 		this.matchType('{');
 		var oldScope = this.scope;
 		this.scope += this.no.newTmpName();
-		this.addAssembly('changeScope', this.scope);
+		this.addAssembly('pushScope', this.scope);
 		this.multiStmt();
 		this.matchType('}');
 		this.scope = oldScope;
-		this.addAssembly('changeScope', this.scope);
+		this.addAssembly('popScope', this.scope);
 		return true;
 	}else if(this.top().type == 'for'){
 		this.forStmt();
@@ -130,8 +130,43 @@ Parser.prototype.stmt = function(){
 		this.matchType(';');
 		this.addAssembly('goto', this.continueLabel);
 		return true;
+	}else if(this.checkType('while')){
+		this.whileStmt();
+		return true;
 	}
 	return false;
+};
+
+Parser.prototype.whileStmt = function(){
+	this.matchType('while');
+	var testLabel = this.no.newTmpLabel();
+	var whileStartLabel = this.no.newTmpLabel();
+	var endLabel = this.no.newTmpLabel();
+
+	this.matchType('(');
+	var oldAssembly = this.assembly;
+	this.assembly = [];
+	var a = this.rhs();
+	this.matchType(')');
+	var aAssembly = this.assembly;
+	this.assembly = oldAssembly;
+	var oldBreak = this.breakLabel;
+	var oldContinue = this.continueLabel;
+
+	this.continueLabel = testLabel;
+	this.breakLabel = endLabel;
+
+	this.addAssembly('goto', testLabel);
+	this.addAssembly('label', whileStartLabel);
+	this.stmt();
+	this.continueLabel = oldContinue;
+	this.breakLabel = oldBreak;
+
+	this.addAssembly('label', testLabel);
+	Array.prototype.push.apply(this.assembly, aAssembly);
+	this.addAssembly('ifngoto', a.name, endLabel);
+	this.addAssembly('goto', whileStartLabel);
+	this.addAssembly('label', endLabel);
 };
 
 Parser.prototype.forStmt = function(){

@@ -1,9 +1,9 @@
 JSCC - a basic C compiler written in JavaScript
 to do:
 Parser -
-	while
 	++, --
 	functions
+	calling functions
 	structs
 	struct member variable calling
 

@@ -5,13 +5,13 @@ function NamingObject(){
 }
 
 NamingObject.prototype.newTmpName = function(){
-	var rv = 'Tmp' + this.tmpVarNo;
+	var rv = '$t_' + this.tmpVarNo;
 	this.tmpVarNo++;
 	return rv;
 };
 
 NamingObject.prototype.newTmpLabel = function(){
-	var rv = 'Label' + this.tmpVarNo;
+	var rv = '#L' + this.tmpVarNo;
 	this.tmpVarNo++;
 	return rv;
 };

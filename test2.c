@@ -1,43 +1,26 @@
-int array[100], i;
-for(i = 0; i < 100; i+=1) array[i] = i;
+int a = 1, count = 0, to = 15;
 
-int searchItem = 76;
-int start = 0, end = 99;
-int found = 0;
-for(;;){
-	int middle = start + (end - start) / 2;
-	if(array[middle] == searchItem){
-		found = 1;
-		break;
-	}
-	if(searchItem < array[middle])
-		end = middle;
-	else start = middle;
+while(1){
+	if(count % 2 == 0) continue;
+	a *= 10;
+	count += 1;
+	if(count >= to) break;
 }
 
-
-
-
 /*
-for(a;b;c) d
+while(a) b
 
-output assembly >>
-
-a
-label l1
-d
-label l2
-c
-ifngoto b l1
-label l0
-
-here: in d, break goes to l0, continue goes to l2
+goto Test
+label whileStart
+b's assembly
+label Test
+a's assembly
+ifngoto a endLabel
+goto whileStart
+label endLabel
 
 
-
-
-
-for(){}
-while(){}
+continue goes to Test
+break goes to endLabel
 
 */
