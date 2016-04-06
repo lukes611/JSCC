@@ -86,7 +86,21 @@ Parser.prototype.checkType = function(type, index){
 };
 
 Parser.prototype.multiStmt = function(){
-	while(this.stmt()) ;
+	while(true){
+		var t1 = this.stmt();
+		if(!t1){
+			if(!this.func()) break;
+		}
+	}
+};
+
+Parser.prototype.func = function(){
+	console.log('yay, functions!');
+	console.log(this.l)
+	if(this.checkType('TYPE') && this.checkType('name',1) && this.checkType('(', 2)){
+		console.log('could have a function here boys')
+	}
+	return false;
 };
 
 Parser.prototype.stmt = function(){
@@ -113,7 +127,7 @@ Parser.prototype.stmt = function(){
 		this.multiStmt();
 		this.matchType('}');
 		this.scope = oldScope;
-		this.addAssembly('popScope', this.scope);
+		this.addAssembly('popScope');
 		return true;
 	}else if(this.top().type == 'for'){
 		this.forStmt();
@@ -122,12 +136,14 @@ Parser.prototype.stmt = function(){
 		if(this.breakLabel === undefined) this.error('warning, using break statement in incorrect spot');
 		this.pop();
 		this.matchType(';');
+		this.addAssembly('popScope');
 		this.addAssembly('goto', this.breakLabel);
 		return true;
 	}else if(this.checkType('continue')){
 		if(this.breakLabel === undefined) this.error('warning, using continue statement in incorrect spot');
 		this.pop();
 		this.matchType(';');
+		this.addAssembly('popScope');
 		this.addAssembly('goto', this.continueLabel);
 		return true;
 	}else if(this.checkType('while')){
@@ -170,23 +186,18 @@ Parser.prototype.whileStmt = function(){
 };
 
 Parser.prototype.forStmt = function(){
-	this.pop(); //pop for
+	this.matchType('for'); //pop for
 	this.matchType('(');
-	var forLoopStart = this.no.newTmpLabel();
-	var a = undefined, b = undefined, c = undefined;
+	var restartLabel = this.no.newTmpLabel(), contLabel = this.no.newTmpLabel(), endLabel = this.no.newTmpLabel();
+	if(!this.checkType(';')) this.rhsMore();
+	this.addAssembly('label', restartLabel);
+	this.matchType(';');
 	if(!this.checkType(';')){
-		a = this.rhsMore();
+		var b = this.rhs();
+		this.addAssembly('ifngoto', b.name, endLabel);
 	}
-
-	this.addAssembly('label', forLoopStart);
 	this.matchType(';');
 	var oldAssembly = this.assembly;
-	this.assembly = [];
-	if(!this.checkType(';')){
-		b = this.rhs();
-	}
-	this.matchType(';');
-	var BAssembly = this.assembly;
 	this.assembly = [];
 	
 	if(!this.checkType(')')){
@@ -198,19 +209,17 @@ Parser.prototype.forStmt = function(){
 	
 	var oldBreakLabel = this.breakLabel;
 	var oldContinueLabel = this.continueLabel;
-	this.continueLabel = this.no.newTmpLabel();
-	this.breakLabel = this.no.newTmpLabel();
+	this.continueLabel = contLabel;
+	this.breakLabel = endLabel;
 
 	if(!this.stmt()) this.error('error in stmt() in for loop!'); //got d
 	
-	this.addAssembly('label', this.continueLabel);
+	this.addAssembly('label', contLabel);
 
 	Array.prototype.push.apply(this.assembly, CAssembly);
 
-	Array.prototype.push.apply(this.assembly, BAssembly);
-	if(b !== undefined) this.addAssembly('ifgoto', b.name, forLoopStart);
-	else this.addAssembly('goto', forLoopStart);
-	this.addAssembly('label', this.breakLabel);
+	this.addAssembly('goto', restartLabel);
+	this.addAssembly('label', endLabel);
 
 	this.breakLabel = oldBreakLabel;
 	this.continueLabel = oldContinueLabel;
@@ -265,7 +274,7 @@ Parser.prototype.moreRHS = function(){
 
 Parser.prototype.initializer = function(){
 	var t = this.top();
-	if(t.type != 'TYPE') return;
+	if(t.type != 'TYPE' || t.str == 'void') return;
 	this.pop();
 	this.moreInitializers(t);
 };
@@ -498,7 +507,7 @@ Parser.prototype.moreFunctionAssignment = function(e1, ops, nextFunction){
 			if(e1.type != 'user' && e1.type != 'ref') this.error('error, assigning to a non variable');
 			var lex = this.pop();
 			var e2 = this[nextFunction]();
-			var bt = this.possibleTypeConversion(e1, e2);
+			var bt = this.typeConversionE1(e1, e2);
 			var vari = this.newTmpVar(bt.bestType, lex.locations);
 			this.addAssembly(op, vari.name, bt.e1.name, bt.e2.name);
 			return this.moreFunction(vari, ops, nextFunction);
@@ -529,6 +538,16 @@ Parser.prototype.possibleTypeConversion = function(e1, e2){
 	};
 };
 
+Parser.prototype.typeConversionE1 = function(e1, e2){
+	var dtype = e1.dtype;
+	return {
+		"bestType": dtype,
+		"e1": this.convertToTypeIfNeccecary(e1, dtype),
+		"e2": this.convertToTypeIfNeccecary(e2, dtype)
+	};
+};
+
+
 Parser.prototype.convertToTypeIfNeccecary = function(inp, type){
 	if(inp.dtype != type) return this.convertToType(inp, type);
 	return inp;
@@ -542,7 +561,7 @@ Parser.prototype.newTmpVar = function(dtype, loc){
 
 Parser.prototype.newDataVar = function(dtype, value, loc){
 	var rv = new Variable(this.no.newTmpName(), dtype, this.scope, 'data', value, loc);
-	this.variables.push(rv);
+	this.dvariables.push(rv);
 	return rv;
 };
 

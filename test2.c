@@ -1,21 +1,13 @@
-int a, b= 1;
-for(a = 0; a < 10; a++){
-	b + 10;
+
+//yay sorted
+void add(int a, int b){
+	int c = a + b;
 }
 
+
 /*
-for(a;b;c) d
+int add(int a, int b){
+	return a + b;
+}
 
-a
-label restart
-b's assembly
-ifngoto b end
-d's assembly
-label cont
-c's assembly
-goto restart
-label end
-
-continue goes to cont
-break goes to end
 */
