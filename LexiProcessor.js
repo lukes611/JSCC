@@ -61,6 +61,15 @@ LexiProcessor.prototype.checkType = function(type, index){
 	return true;
 };
 
+//checks if type is the next type of lexicon in list, if so it is popped off and this returns true
+//users can pass in index to specify a type further down the list
+LexiProcessor.prototype.checkMatchType = function(type, index){
+	if(this.top(index) === undefined) return false;
+	if(this.top(index).type != type) return false;
+	this.pop();
+	return true;
+};
+
 
 
 module.exports = LexiProcessor;

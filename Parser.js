@@ -3,10 +3,12 @@ var NamingObject = require('./NamingObject');
 var assert = require('assert');
 var FuncVar = require('./FuncVar');
 var LexiProcessor = require('./LexiProcessor');
+var ScopeObject = require('./ScopeObject');
 
 //the parser object
 function Parser(lexiList){
 	this.__proto__.__proto__ = new LexiProcessor(lexiList);
+	this.so = new ScopeObject();
 	this.variables = [];
 	this.dvariables = [];
 	this.assembly = [];

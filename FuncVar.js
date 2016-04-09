@@ -5,6 +5,8 @@ function FuncVar(name, returnType, argumentDTypes){
 	this.returnType = returnType;
 	this.arguments = argumentDTypes.map(function(i){return i;});
 	this.assembly = [];
+	this.variables = [];
+	this.dvariables = [];
 }
 
 FuncVar.prototype.scopeName = function(){
