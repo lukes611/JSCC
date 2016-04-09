@@ -194,9 +194,11 @@ Parser.prototype.stmt = function(){
 	}else if(this.checkType('return')){
 		this.pop();
 		if(this.checkType(';')){
+			this.addAssembly('popFunc');
 			this.addAssembly('ret');
 			this.pop();
 		}else{
+			this.addAssembly('popFunc');
 			this.addAssembly('ret', this.rhs().name);
 			this.matchType(';');
 		}
