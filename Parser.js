@@ -2,10 +2,11 @@ var Variable = require('./Variable');
 var NamingObject = require('./NamingObject');
 var assert = require('assert');
 var FuncVar = require('./FuncVar');
+var LexiProcessor = require('./LexiProcessor');
 
 //the parser object
 function Parser(lexiList){
-	this.l = lexiList;
+	this.__proto__.__proto__ = new LexiProcessor(lexiList);
 	this.variables = [];
 	this.dvariables = [];
 	this.assembly = [];
@@ -16,12 +17,6 @@ function Parser(lexiList){
 	this.breakLabel = undefined;
 }
 
-//a function to print out the lexicons in order
-Parser.prototype.printLexicons = function(){
-	this.l.forEach(function(l){
-		console.log(l.toString());
-	});
-};
 
 Parser.prototype.addAssembly = function(){
 	if(arguments.length == 0) return;
@@ -42,19 +37,10 @@ Parser.prototype.toString = function(){
 	return st;
 };
 
-Parser.prototype.top = function(index){
-	index = (index === undefined)? 0 : index;
-	if(index >= this.l.length) return undefined;
-	return this.l[index];
-};
 
 
-Parser.prototype.pop = function(){
-	if(this.l.length == 0) return undefined;
-	var rv = this.l[0];
-	this.l.shift();
-	return rv;
-};
+
+
 
 Parser.prototype.getDefinedVariable = function(v){
 	for(var i = 0; i < this.variables.length; i++) if(this.variables[i].eq(v)) return i;
@@ -68,26 +54,9 @@ Parser.prototype.variableExistsInScope = function(v){
 };
 
 
-Parser.prototype.error = function(str){
-	console.log('error' + str);
-	assert(false, 'cool');
-};
 
-Parser.prototype.matchType = function(type){
-	if(this.top() === undefined) this.error('error matching');
-	if(this.top().type != type){
-		this.error('error matching');
-	}
-	return this.pop();
-};
 
-Parser.prototype.checkType = function(type, index){
-	if(this.top(index) === undefined) return false;
-	if(this.top(index).type != type){
-		return false;
-	}
-	return true;
-};
+
 
 Parser.prototype.multiStmt = function(){
 	while(true){

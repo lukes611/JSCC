@@ -1,6 +1,8 @@
 
 void nothing(){}
 
+int a = 5;
+
 //yay sorted
 void add(int a, int b){
 	int c = a + b;
