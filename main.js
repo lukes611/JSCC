@@ -5,7 +5,7 @@ var code = new CSource();
 code.open('test2.c');
 var lx = new LexicalAnalyser(code);
 var parser = new Parser(lx.compute());
-parser.printLexicons();
+//parser.printLexicons();
 parser.multiStmt();
 //while(parser.stmt()) ;
 	

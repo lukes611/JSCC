@@ -1,10 +1,9 @@
 JSCC - a basic C compiler written in JavaScript
 to do:
 Parser -
-	functions
-	calling functions
+	function calls
 	structs
-	struct member variable calling
+	struct member variables and method calling
 
 
 shortcomings: no do while, no preprocessor definitions,

@@ -1,6 +1,7 @@
 var Variable = require('./Variable');
 var NamingObject = require('./NamingObject');
 var assert = require('assert');
+var FuncVar = require('./FuncVar');
 
 //the parser object
 function Parser(lexiList){
@@ -8,6 +9,7 @@ function Parser(lexiList){
 	this.variables = [];
 	this.dvariables = [];
 	this.assembly = [];
+	this.funcs = [];
 	this.no = new NamingObject;
 	this.scope = 'global';
 	this.continueLabel = undefined;
@@ -35,6 +37,8 @@ Parser.prototype.toString = function(){
 	this.variables.forEach(f1);
 	st += 'CODE:\n';
 	this.assembly.forEach(function(x){st += x + '\n'; });
+	st += 'FUNCTIONS:\n';
+	this.funcs.forEach(f1);
 	return st;
 };
 
@@ -87,20 +91,58 @@ Parser.prototype.checkType = function(type, index){
 
 Parser.prototype.multiStmt = function(){
 	while(true){
-		var t1 = this.stmt();
+		var t1 = this.func();
 		if(!t1){
-			if(!this.func()) break;
+			if(!this.stmt()) break;
 		}
 	}
 };
 
 Parser.prototype.func = function(){
-	console.log('yay, functions!');
-	console.log(this.l)
 	if(this.checkType('TYPE') && this.checkType('name',1) && this.checkType('(', 2)){
-		console.log('could have a function here boys')
+		var rtype = this.matchType('TYPE').str;
+		var fname = this.matchType('name').str;
+		this.matchType('(');
+		var args = this.funcArgs();
+		this.matchType(')');
+		var oldAssembly = this.assembly;
+		this.assembly = [];
+		var func = new FuncVar(fname, rtype, args.map(function(x){return x.dtype;}));
+		this.funcs.push(func);
+		if(this.checkType(';'))
+			this.matchType(';');
+		else{
+			this.matchType('{');
+			this.addAssembly('pushFunc', func.scopeName());
+			this.addAssembly('popArgs', args.map(function(x){return x.name}).join(' '));
+			var oldScope = this.scope;
+			this.scope = func.scopeName();
+			var me = this;
+			args.forEach(function(arg){me.newUserVar(arg.name, arg.dtype);});
+			this.multiStmt();
+			this.matchType('}');
+			this.addAssembly('popFunc');
+		}
+		func.assembly = this.assembly;
+		this.assembly = oldAssembly;
+		return true;
 	}
 	return false;
+};
+
+Parser.prototype.funcArgs = function(){
+	var rv = [], me = this;
+	var hasNext = function(){return me.checkType('TYPE') && me.checkType('name', 1);};
+	var tmpF = function(){
+		if(hasNext()){
+			var t = me.matchType('TYPE');
+			var n = me.matchType('name');
+			rv.push({dtype:t.str, name:n.str});
+			if(me.checkType(',')){ me.matchType(','); tmpF(); };
+		}
+	};
+	if(hasNext()) tmpF();
+	return rv;
 };
 
 Parser.prototype.stmt = function(){
@@ -148,6 +190,16 @@ Parser.prototype.stmt = function(){
 		return true;
 	}else if(this.checkType('while')){
 		this.whileStmt();
+		return true;
+	}else if(this.checkType('return')){
+		this.pop();
+		if(this.checkType(';')){
+			this.addAssembly('ret');
+			this.pop();
+		}else{
+			this.addAssembly('ret', this.rhs().name);
+			this.matchType(';');
+		}
 		return true;
 	}
 	return false;
