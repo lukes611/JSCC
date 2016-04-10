@@ -1,4 +1,7 @@
+var Variable = require('./Variable');
 var NamingObject = require('./NamingObject');
+var FuncVar = require('./FuncVar');
+
 /*
 global -> inits, functions, structs, dvars, vars, assembly, scope
 functions -> global, inits, assembly, dvars, vars, scope
@@ -7,7 +10,8 @@ stack -> global, inits, dvars, vars
 ScopeObject has a static namingObject 
 */
 
-function ScopeObject(){
+function ScopeObject(errorF){
+	this.error = errorF;
 	this.variables = [[]];
 	this.dvariables = [[]];
 	this.assembly = [[]];
@@ -48,36 +52,67 @@ ScopeObject.prototype.addAssembly = function(){
 };
 //creates a new Temporary variable and adds it to the 
 ScopeObject.prototype.newTmpVar = function(dtype, loc){
-	var rv = new Variable(this.namingObject.newTmpName(), dtype, this.getScope(), 'tmp', undefined, loc);
+	var id = this.namingObject.newId();
+	var rv = new Variable(this.namingObject.newTmpName(), dtype, this.getScope(), 'tmp', undefined, id, loc);
 	this.getVariables().push(rv);
 	return rv;
 };
 //creates a new data variable for holding data
 ScopeObject.prototype.newDataVar = function(dtype, value, loc){
-	var rv = new Variable(this.namingObject.newTmpName(), dtype, this.getScope(), 'data', value, loc);
+	var id = this.namingObject.newId();
+	var rv = new Variable(this.namingObject.newTmpName(), dtype, this.getScope(), 'data', value, id, loc);
 	this.getDVariables().push(rv);
 	return rv;
 };
-//up2 dis!!!!blah
+//creates a new bytes data variable
 ScopeObject.prototype.newBytesVar = function(dtype, value, loc){
-	var rv = new Variable(this.no.newTmpName(), dtype, this.scope, 'bytes', value, loc);
+	var id = this.namingObject.newId();
+	var rv = new Variable(this.namingObject.newTmpName(), dtype, this.getScope(), 'bytes', value, id, loc);
+	this.getDVariables().push(rv);
+	return rv;
+};
+
+//creates and returns a reference type variable
+ScopeObject.prototype.newRefVar = function(dtype, loc){
+	var id = this.namingObject.newId();
+	var rv = new Variable(this.namingObject.newTmpName(), dtype, this.getScope(), 'ref', undefined, id, loc);
 	this.getVariables().push(rv);
 	return rv;
 };
 
-
-Parser.prototype.newRefVar = function(dtype, loc){
-	var rv = new Variable(this.no.newTmpName(), dtype, this.scope, 'ref', undefined, loc);
-	this.variables.push(rv);
+//creates and returns a new user variable, unless one exists
+ScopeObject.prototype.newUserVar = function(name, dtype, loc){
+	var id = this.namingObject.newId();
+	var rv = new Variable(name, dtype, this.getScope(), 'user', undefined, id, loc);
+	if(this.variableExistsInScope(rv)!=-1) this.error('Error, variable: ' + name + ' was previously defined');
+	this.getVariables().push(rv);
 	return rv;
 };
 
-Parser.prototype.newUserVar = function(name, dtype, loc){
-	var rv = new Variable(name, dtype, this.scope, 'user', undefined, loc);
-	if(this.variableExistsInScope(rv)!=-1) this.error('Error, variable: ' + name + ' has already been defined on line ' + loc);
-	this.variables.push(rv);
-	return rv;
+//checks if a variable exists in the current scope
+ScopeObject.prototype.variableExistsInScope = function(v, vars){
+	if(vars === undefined) vars = this.getVariables();
+	for(var i = 0; i < vars.length; i++) if(vars[i].eq(v)) return vars[i];
+	return undefined;
 };
+
+//checks if a variable exists in some scope
+ScopeObject.prototype.variableExists = function(v, vars){
+	for(var i = 0; i < vars.length; i++) if(vars[i].eqScope(v)) return vars[i];
+	return undefined;
+};
+
+
+//tries to get a variable out of the scope
+//tries to get a variable on the stack or a global one
+Parser.prototype.getDefinedVariable = function(v){
+	for(var i = 1; i < this.variables.length; i++){
+		var v2 = this.variableExists(v, this.variables.slice(-i));
+		if(v2 !== undefined) return v2;
+	}
+	return undefined;
+};
+
 
 
 

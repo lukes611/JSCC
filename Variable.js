@@ -8,12 +8,13 @@ types: user, tmp, ref, data, bytes
 
 */
 
-function Variable(name, dtype, scope, type, value, codeLocations){
+function Variable(name, dtype, scope, type, value, uniqueId, codeLocations){
 	this.name = name;
 	this.dtype = dtype;
 	this.scope = scope;
 	this.type = type;
 	this.value = value;
+	this.uniqueId = uniqueId;
 	this.codeLocations = codeLocations;
 }
 
@@ -29,6 +30,9 @@ Variable.prototype.eq = function(v2){
 
 Variable.prototype.eqGlobal = function(v2){ return this.name == v2.name && this.type == v2.type &&
 	(this.scope == 'global'); };
+
+Variable.prototype.eqStack = function(v2){ return this.name == v2.name && this.type == v2.type; };
+
 
 Variable.prototype.sameDType = function(v2){ return this.dtype == v2.dtype; };
 

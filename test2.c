@@ -1,21 +1,10 @@
 
-void nothing(){}
-
-int a = 5;
-
-//yay sorted
-void add(int a, int b){
-	int c = a + b;
-	return c;
-}
-
 int main(int argc, char ** argv){
 
 	int a = 5;
-	int b = 6;
-
-	int c = a+b;
-
+	{
+		a = 10;
+	}
 
 	return 0;
 }

@@ -8,7 +8,7 @@ var ScopeObject = require('./ScopeObject');
 //the parser object
 function Parser(lexiList){
 	this.__proto__.__proto__ = new LexiProcessor(lexiList);
-	this.so = new ScopeObject();
+	this.so = new ScopeObject(this.error.bind(this));
 	this.variables = [];
 	this.dvariables = [];
 	this.assembly = [];
@@ -43,13 +43,14 @@ Parser.prototype.toString = function(){
 
 
 
-
+//tries to get a variable on the stack or a global one
 Parser.prototype.getDefinedVariable = function(v){
 	for(var i = 0; i < this.variables.length; i++) if(this.variables[i].eq(v)) return i;
 	for(var i = 0; i < this.variables.length; i++) if(this.variables[i].eqGlobal(v)) return i;
 	return -1;
 };
 
+//checks if a variable exists in this scope
 Parser.prototype.variableExistsInScope = function(v){
 	for(var i = 0; i < this.variables.length; i++) if(this.variables[i].eq(v)) return i;
 	return -1;
