@@ -2,9 +2,11 @@
 int main(int argc, char ** argv){
 
 	int a = 5;
-	{
-		a = 10;
+	while(1){
+		a *= 10;
+		if(a == 1000) break;
 	}
+
 
 	return 0;
 }

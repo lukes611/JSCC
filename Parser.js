@@ -9,24 +9,10 @@ var ScopeObject = require('./ScopeObject');
 function Parser(lexiList){
 	this.__proto__.__proto__ = new LexiProcessor(lexiList);
 	this.so = new ScopeObject(this.error.bind(this));
-	this.variables = [];
-	this.dvariables = [];
-	this.assembly = [];
-	this.funcs = [];
-	this.no = new NamingObject;
-	this.scope = 'global';
-	this.continueLabel = undefined;
-	this.breakLabel = undefined;
 }
 
-
-Parser.prototype.addAssembly = function(){
-	if(arguments.length == 0) return;
-	var st = []; for(var i = 0; i < arguments.length; i++) st.push(arguments[i]);
-	this.assembly.push(st.join(' '));
-};
-
 Parser.prototype.toString = function(){
+	return this.so.toString();
 	var st = 'DVARS:\n';
 	var f1 = function(x){ st += x.toString() + '\n'; };
 	this.dvariables.forEach(f1);
@@ -38,28 +24,6 @@ Parser.prototype.toString = function(){
 	this.funcs.forEach(f1);
 	return st;
 };
-
-
-
-
-
-//tries to get a variable on the stack or a global one
-Parser.prototype.getDefinedVariable = function(v){
-	for(var i = 0; i < this.variables.length; i++) if(this.variables[i].eq(v)) return i;
-	for(var i = 0; i < this.variables.length; i++) if(this.variables[i].eqGlobal(v)) return i;
-	return -1;
-};
-
-//checks if a variable exists in this scope
-Parser.prototype.variableExistsInScope = function(v){
-	for(var i = 0; i < this.variables.length; i++) if(this.variables[i].eq(v)) return i;
-	return -1;
-};
-
-
-
-
-
 
 Parser.prototype.multiStmt = function(){
 	while(true){
@@ -77,26 +41,25 @@ Parser.prototype.func = function(){
 		this.matchType('(');
 		var args = this.funcArgs();
 		this.matchType(')');
-		var oldAssembly = this.assembly;
+		this.so.pushAssembly();
 		this.assembly = [];
 		var func = new FuncVar(fname, rtype, args.map(function(x){return x.dtype;}));
-		this.funcs.push(func);
+		this.so.funcs.push(func);
 		if(this.checkType(';'))
 			this.matchType(';');
 		else{
 			this.matchType('{');
-			this.addAssembly('pushFunc', func.scopeName());
-			this.addAssembly('popArgs', args.map(function(x){return x.name}).join(' '));
-			var oldScope = this.scope;
-			this.scope = func.scopeName();
+			this.so.addAssembly('pushFunc', func.scopeName());
+			this.so.addAssembly('popArgs', args.map(function(x){return x.name}).join(' '));
+			this.so.pushScope(func.scopeName());
 			var me = this;
-			args.forEach(function(arg){me.newUserVar(arg.name, arg.dtype);});
+			args.forEach(function(arg){me.so.newUserVar(arg.name, arg.dtype);});
 			this.multiStmt();
 			this.matchType('}');
-			this.addAssembly('popFunc');
+			this.so.addAssembly('popFunc');
+			this.so.popScope();
 		}
-		func.assembly = this.assembly;
-		this.assembly = oldAssembly;
+		func.assembly = this.so.popAssembly();
 		return true;
 	}
 	return false;
@@ -135,30 +98,29 @@ Parser.prototype.stmt = function(){
 		return true;
 	}else if(this.top().type == '{'){
 		this.matchType('{');
-		var oldScope = this.scope;
-		this.scope += this.no.newTmpName();
-		this.addAssembly('pushScope', this.scope);
+		this.so.pushScope();
+		this.so.addAssembly('pushScope', this.scope);
 		this.multiStmt();
 		this.matchType('}');
-		this.scope = oldScope;
-		this.addAssembly('popScope');
+		this.so.popScope();
+		this.so.addAssembly('popScope');
 		return true;
 	}else if(this.top().type == 'for'){
 		this.forStmt();
 		return true;
 	}else if(this.checkType('break')){
-		if(this.breakLabel === undefined) this.error('warning, using break statement in incorrect spot');
+		if(!this.so.hasLoopRedirects()) this.error('warning, using break statement in incorrect spot');
 		this.pop();
 		this.matchType(';');
-		this.addAssembly('popScope');
-		this.addAssembly('goto', this.breakLabel);
+		this.so.addAssembly('popScope');
+		this.so.addAssembly('goto', this.so.getBreakLabel());
 		return true;
 	}else if(this.checkType('continue')){
-		if(this.breakLabel === undefined) this.error('warning, using continue statement in incorrect spot');
+		if(!this.so.hasLoopRedirects()) this.error('warning, using continue statement in incorrect spot');
 		this.pop();
 		this.matchType(';');
-		this.addAssembly('popScope');
-		this.addAssembly('goto', this.continueLabel);
+		this.so.addAssembly('popScope');
+		this.so.addAssembly('goto', this.so.getContinueLabel());
 		return true;
 	}else if(this.checkType('while')){
 		this.whileStmt();
@@ -166,12 +128,12 @@ Parser.prototype.stmt = function(){
 	}else if(this.checkType('return')){
 		this.pop();
 		if(this.checkType(';')){
-			this.addAssembly('popFunc');
-			this.addAssembly('ret');
+			this.so.addAssembly('popFunc');
+			this.so.addAssembly('ret');
 			this.pop();
 		}else{
-			this.addAssembly('popFunc');
-			this.addAssembly('ret', this.rhs().name);
+			this.so.addAssembly('popFunc');
+			this.so.addAssembly('ret', this.rhs().name);
 			this.matchType(';');
 		}
 		return true;
@@ -181,74 +143,64 @@ Parser.prototype.stmt = function(){
 
 Parser.prototype.whileStmt = function(){
 	this.matchType('while');
-	var testLabel = this.no.newTmpLabel();
-	var whileStartLabel = this.no.newTmpLabel();
-	var endLabel = this.no.newTmpLabel();
+	var testLabel = this.so.newLabel();
+	var whileStartLabel = this.so.newLabel();
+	var endLabel = this.so.newLabel();
 
 	this.matchType('(');
-	var oldAssembly = this.assembly;
-	this.assembly = [];
+	this.so.pushAssembly();
 	var a = this.rhs();
 	this.matchType(')');
-	var aAssembly = this.assembly;
-	this.assembly = oldAssembly;
-	var oldBreak = this.breakLabel;
-	var oldContinue = this.continueLabel;
+	var aAssembly = this.so.popAssembly();
 
-	this.continueLabel = testLabel;
-	this.breakLabel = endLabel;
+	this.so.pushContinueBreak(testLabel, endLabel);
 
-	this.addAssembly('goto', testLabel);
-	this.addAssembly('label', whileStartLabel);
+	this.so.addAssembly('goto', testLabel);
+	this.so.addAssembly('label', whileStartLabel);
 	this.stmt();
-	this.continueLabel = oldContinue;
-	this.breakLabel = oldBreak;
+	
+	this.so.popContinueBreak();
 
-	this.addAssembly('label', testLabel);
-	Array.prototype.push.apply(this.assembly, aAssembly);
-	this.addAssembly('ifngoto', a.name, endLabel);
-	this.addAssembly('goto', whileStartLabel);
-	this.addAssembly('label', endLabel);
+	this.so.addAssembly('label', testLabel);
+	this.so.addAssemblyList(aAssembly);
+	this.so.addAssembly('ifngoto', a.name, endLabel);
+	this.so.addAssembly('goto', whileStartLabel);
+	this.so.addAssembly('label', endLabel);
 };
 
 Parser.prototype.forStmt = function(){
 	this.matchType('for'); //pop for
 	this.matchType('(');
-	var restartLabel = this.no.newTmpLabel(), contLabel = this.no.newTmpLabel(), endLabel = this.no.newTmpLabel();
+	var restartLabel = this.so.newLabel(), contLabel = this.so.newLabel(), endLabel = this.so.newLabel();
 	if(!this.checkType(';')) this.rhsMore();
-	this.addAssembly('label', restartLabel);
+	this.so.addAssembly('label', restartLabel);
 	this.matchType(';');
 	if(!this.checkType(';')){
 		var b = this.rhs();
-		this.addAssembly('ifngoto', b.name, endLabel);
+		this.so.addAssembly('ifngoto', b.name, endLabel);
 	}
 	this.matchType(';');
-	var oldAssembly = this.assembly;
-	this.assembly = [];
+	this.so.pushAssembly();
 	
 	if(!this.checkType(')')){
 		c = this.rhsMore();
 	}
-	var CAssembly = this.assembly;
-	this.assembly = oldAssembly;
+	var CAssembly = this.so.popAssembly();
 	this.matchType(')');
 	
-	var oldBreakLabel = this.breakLabel;
-	var oldContinueLabel = this.continueLabel;
-	this.continueLabel = contLabel;
-	this.breakLabel = endLabel;
-
+	this.so.pushContinueBreak(contLabel, endLabel);
+	
 	if(!this.stmt()) this.error('error in stmt() in for loop!'); //got d
 	
-	this.addAssembly('label', contLabel);
+	this.so.addAssembly('label', contLabel);
 
-	Array.prototype.push.apply(this.assembly, CAssembly);
+	console.log(CAssembly)
+	this.so.addAssemblyList(CAssembly);
+	
+	this.so.addAssembly('goto', restartLabel);
+	this.so.addAssembly('label', endLabel);
 
-	this.addAssembly('goto', restartLabel);
-	this.addAssembly('label', endLabel);
-
-	this.breakLabel = oldBreakLabel;
-	this.continueLabel = oldContinueLabel;
+	this.so.popContinueBreak();
 };
 
 Parser.prototype.ifStmt = function(){
@@ -256,13 +208,13 @@ Parser.prototype.ifStmt = function(){
 	this.matchType('(');
 	var e1 = this.rhs();
 	this.matchType(')');
-	var endLabel = this.no.newTmpLabel();
-	var l1 = this.no.newTmpLabel();
+	var endLabel = this.so.newLabel();
+	var l1 = this.so.newLabel();
 
-	this.addAssembly('ifngoto', e1.name, l1);
+	this.so.addAssembly('ifngoto', e1.name, l1);
 	if(!this.stmt()) this.error('error in if statement');
-	this.addAssembly('goto', endLabel);
-	this.addAssembly('label', l1);
+	this.so.addAssembly('goto', endLabel);
+	this.so.addAssembly('label', l1);
 
 	this.moreIf(endLabel);
 };
@@ -276,17 +228,17 @@ Parser.prototype.moreIf = function(endLabel){
 			this.matchType('(');
 			var e1 = this.rhs();
 			this.matchType(')');
-			var l1 = this.no.newTmpLabel();
-			this.addAssembly('ifngoto', e1.name, l1);
+			var l1 = this.so.newLabel();
+			this.so.addAssembly('ifngoto', e1.name, l1);
 			if(!this.stmt()) this.error('error in else statement');
-			this.addAssembly('goto', endLabel);
-			this.addAssembly('label', l1);
+			this.so.addAssembly('goto', endLabel);
+			this.so.addAssembly('label', l1);
 			this.moreIf(endLabel);
 		}else{
 			if(!this.stmt()) this.error('error in else statement');
-			this.addAssembly('label', endLabel);	
+			this.so.addAssembly('label', endLabel);	
 		}
-	}else this.addAssembly('label', endLabel);
+	}else this.so.addAssembly('label', endLabel);
 
 };
 
@@ -311,19 +263,19 @@ Parser.prototype.moreInitializers = function(t){
 	if(this.top().type == '['){
 		this.pop();
 		var i = this.matchType('int');
-		var constant = this.newBytesVar('int', Number(i.str));
-		vari = this.newUserVar(variLex.str, t.str+'*', variLex.locations);
+		var constant = this.so.newBytesVar('int', Number(i.str));
+		vari = this.so.newUserVar(variLex.str, t.str+'*', variLex.locations);
 		this.matchType(']');
-		this.addAssembly('=',vari.name,constant.name);
+		this.so.addAssembly('=',vari.name,constant.name);
 	}else
-		vari = this.newUserVar(variLex.str, t.str, variLex.locations);
+		vari = this.so.newUserVar(variLex.str, t.str, variLex.locations);
 
 	if(this.checkType('=')){
 		this.pop();
 		var rh = this.rhs();
 		var bestType = vari.dtype;
-		rh = this.convertToTypeIfNeccecary(rh, bestType);
-		this.assembly.push('= ' + vari.name + ' ' + rh.name);
+		rh = this.so.convertToTypeIfNecessary(rh, bestType);
+		this.so.addAssembly('=', vari.name, rh.name);
 	}
 	if(this.checkType(',')){
 		this.pop();
@@ -350,33 +302,32 @@ Parser.prototype.ternary = function(){
 	var e1 = this.logic();
 	if(this.checkType('?')){
 		var lex = this.pop();
-		var l1 = this.no.newTmpLabel();
-		var l2 = this.no.newTmpLabel();
-		var oldAssembly = this.assembly;
-		this.assembly = [];
+		var l1 = this.so.newLabel();
+		var l2 = this.so.newLabel();
+		this.so.pushAssembly();
 		var e2 = this.logic();
-		var e2Assembly = this.assembly;
+		var e2Assembly = this.so.popAssembly();
 		this.matchType(':');
-		this.assembly = [];
+		this.so.pushAssembly();
 		var e3 = this.logic();
-		var e3Assembly = this.assembly;
-		this.assembly = oldAssembly;
-
-		var bestType = this.no.typeResolution(e2.dtype, e3.dtype);
-		e2 = this.convertToTypeIfNeccecary(e2, bestType);
-		e3 = this.convertToTypeIfNeccecary(e3, bestType);
-		var vari = this.newTmpVar(bestType, lex.locations);
+		var e3Assembly = this.so.popAssembly();
 		
-		this.addAssembly('gotoifn', e1.name, l1);
+		var bt = this.so.possibleTypeConversion(e2, e3);
+		//var bestType = this.no.typeResolution(e2.dtype, e3.dtype);
+		//e2 = this.convertToTypeIfNeccecary(e2, bestType);
+		//e3 = this.convertToTypeIfNeccecary(e3, bestType);
+		var vari = this.so.newTmpVar(bt.bestType, lex.locations);
+		
+		this.so.addAssembly('gotoifn', e1.name, l1);
 		//add e2's assembly first
-		Array.prototype.push.apply(this.assembly, e2Assembly);
-		this.addAssembly('=', vari.name, e2.name);
-		this.addAssembly('goto', l2);
-		this.addAssembly('label', l1);
-		Array.prototype.push.apply(this.assembly, e3Assembly);
-		this.addAssembly('=', vari.name, e3.name);
-		this.addAssembly('label', l2);
-
+		this.so.addAssemblyList(e2Assembly);
+		this.so.addAssembly('=', vari.name, e2.name);
+		this.so.addAssembly('goto', l2);
+		this.so.addAssembly('label', l1);
+		this.so.addAssemblyList(e3Assembly);
+		this.so.addAssembly('=', vari.name, e3.name);
+		this.so.addAssembly('label', l2);
+		return vari;
 	}
 	return e1;
 };
@@ -422,41 +373,41 @@ Parser.prototype.preElement = function(){
 	if(this.checkType('-')){
 		var lex = this.pop();
 		var rv = this.element();
-		var vari = this.newTmpVar(rv.dtype, lex.locations);
-		this.addAssembly('invert', vari.name, rv.name);
+		var vari = this.so.newTmpVar(rv.dtype, lex.locations);
+		this.so.addAssembly('invert', vari.name, rv.name);
 		return vari;
 	}else if(this.checkType('!')){
 		var lex = this.pop();
 		var rv = this.element();
-		var vari = this.newTmpVar(rv.dtype, lex.locations);
-		this.addAssembly('!', vari.name, rv.name);
+		var vari = this.so.newTmpVar(rv.dtype, lex.locations);
+		this.so.addAssembly('!', vari.name, rv.name);
 		return vari;
 	}else if(this.checkType('&')){
 		var lex = this.pop();
 		var rv = this.element();
-		var vari = this.newTmpVar(rv.dtype+'*', lex.locations);
-		this.addAssembly('ref', vari.name, rv.name);
+		var vari = this.so.newTmpVar(rv.dtype+'*', lex.locations);
+		this.so.addAssembly('ref', vari.name, rv.name);
 		return vari;
 	}else if(this.checkType('*')){
 		var lex = this.pop();
 		var rv = this.element();
 		if(rv.type != 'user' && !rv.isPtr()) this.error('illegal de-reference of a variable');
-		var vari = this.newRefVar(rv.dtype, lex.locations);
+		var vari = this.so.newRefVar(rv.dtype, lex.locations);
 		vari.dref();
-		this.addAssembly('deref', vari.name, rv.name);
+		this.so.addAssembly('deref', vari.name, rv.name);
 		return vari;
 	}else if(this.checkType('~')){
 		var lex = this.pop();
 		var rv = this.element();
-		var vari = this.newTmpVar(rv.dtype, lex.locations);
-		this.addAssembly('~', vari.name, rv.name);
+		var vari = this.so.newTmpVar(rv.dtype, lex.locations);
+		this.so.addAssembly('~', vari.name, rv.name);
 		return vari;
 	}else if(this.checkType('(') && this.checkType('TYPE', 1)){
 		this.pop();
 		var type = this.matchType('TYPE');
 		this.matchType(')');
 		var rv = this.element();
-		return this.convertToType(rv, type.str);
+		return this.so.convertToType(rv, type.str);
 	}else{
 		return this.element();
 	}
@@ -467,7 +418,7 @@ Parser.prototype.element = function(){
 	var e = this.pop();
 	var types = 'int,double,float,char,string,short,hex'.split(',');
 	if(types.indexOf(e.type) != -1)
-		return this.newDataVar(e.type, e.str, e.locations);
+		return this.so.newDataVar(e.type, e.str, e.locations);
 	else if(e.type == 'name')
 		return this.postNamedVariable(this.existingVariable(e));
 	else if(e.type == '('){
@@ -480,10 +431,10 @@ Parser.prototype.element = function(){
 
 Parser.prototype.existingVariable = function(e){
 	if(e === undefined) e = this.matchType('name');
-	var vari = new Variable(e.str, undefined, this.scope, 'user', undefined, undefined);
-	var index = this.getDefinedVariable(vari);
-	if(index == -1) this.error(' variable ' + vari.name + ' is not defined but is referenced');
-	return this.variables[index];
+	var vari = new Variable(e.str, undefined, this.so.getScope(), 'user', undefined, undefined);
+	var v = this.so.getDefinedVariable(vari);
+	if(v === undefined) this.error(' variable ' + vari.name + ' is not defined but is referenced');
+	return v;
 };
 
 Parser.prototype.postNamedVariable = function(e1){
@@ -492,20 +443,20 @@ Parser.prototype.postNamedVariable = function(e1){
 		this.matchType('[');
 		var e2 = this.rhs();
 		this.matchType(']');
-		var bt = this.possibleTypeConversion(e1, e2);
-		var vari = this.newTmpVar(bt.bestType, e.locations);
-		this.addAssembly('+',vari.name,bt.e1.name, bt.e2.name);
-		var vari2 = this.newRefVar(vari.dtype, e.locations);
+		var bt = this.so.possibleTypeConversion(e1, e2);
+		var vari = this.so.newTmpVar(bt.bestType, e.locations);
+		this.so.addAssembly('+',vari.name,bt.e1.name, bt.e2.name);
+		var vari2 = this.so.newRefVar(vari.dtype, e.locations);
 		vari2.dref();
-		this.addAssembly('deref', vari2.name, vari.name);
+		this.so.addAssembly('deref', vari2.name, vari.name);
 		return vari2;
 	}else if(e.type == '++' || e.type == '--'){
 		this.matchType(e.type);
 		if(e1.dtype != 'int' && !e1.isPtr())
 			this.error('warning, attempting to increment a non integer type / non pointer type');
-		var e2 = this.newTmpVar(e1.dtype, e.locations);
-		this.addAssembly('=', e2.name, e1.name);
-		this.addAssembly(e.type, e1.name);
+		var e2 = this.so.newTmpVar(e1.dtype, e.locations);
+		this.so.addAssembly('=', e2.name, e1.name);
+		this.so.addAssembly(e.type, e1.name);
 		return e2;
 	}
 	return e1;
@@ -517,9 +468,9 @@ Parser.prototype.moreFunction = function(e1, ops, nextFunction){
 		if(this.checkType(op)){
 			var lex = this.pop();
 			var e2 = this[nextFunction]();
-			var bt = this.possibleTypeConversion(e1, e2);
-			var vari = this.newTmpVar(bt.bestType, lex.locations);
-			this.addAssembly(op, vari.name, bt.e1.name, bt.e2.name);
+			var bt = this.so.possibleTypeConversion(e1, e2);
+			var vari = this.so.newTmpVar(bt.bestType, lex.locations);
+			this.so.addAssembly(op, vari.name, bt.e1.name, bt.e2.name);
 			return this.moreFunction(vari, ops, nextFunction);
 		}
 	}
@@ -533,83 +484,13 @@ Parser.prototype.moreFunctionAssignment = function(e1, ops, nextFunction){
 			if(e1.type != 'user' && e1.type != 'ref') this.error('error, assigning to a non variable');
 			var lex = this.pop();
 			var e2 = this[nextFunction]();
-			var bt = this.typeConversionE1(e1, e2);
-			var vari = this.newTmpVar(bt.bestType, lex.locations);
-			this.addAssembly(op, vari.name, bt.e1.name, bt.e2.name);
+			var bt = this.so.typeConversionE1(e1, e2);
+			var vari = this.so.newTmpVar(bt.bestType, lex.locations);
+			this.so.addAssembly(op, vari.name, bt.e1.name, bt.e2.name);
 			return this.moreFunction(vari, ops, nextFunction);
 		}
 	}
 	return e1;	
 };
-
-
-
-
-Parser.prototype.convertToType = function(inp, type){
-	var name = this.no.newTmpName();
-	var vari = new Variable(name, type, 'tmp', this.no.scope, undefined, 1);
-	this.variables.push(vari);
-	this.assembly.push('convertTo ' + type + ' from ' + inp.dtype + ' ' + vari.name + ' ' + inp.name);
-	return vari;
-};
-
-Parser.prototype.possibleTypeConversion = function(e1, e2){
-	var bestType = e1.bestConversion(e2);
-	if(bestType === undefined) this.error('Warning: Cannot convert ' + e1.dtype + ' and ' +
-		e2.dtype + ' to common type');
-	return {
-		"bestType": bestType,
-		"e1": this.convertToTypeIfNeccecary(e1, bestType),
-		"e2": this.convertToTypeIfNeccecary(e2, bestType)
-	};
-};
-
-Parser.prototype.typeConversionE1 = function(e1, e2){
-	var dtype = e1.dtype;
-	return {
-		"bestType": dtype,
-		"e1": this.convertToTypeIfNeccecary(e1, dtype),
-		"e2": this.convertToTypeIfNeccecary(e2, dtype)
-	};
-};
-
-
-Parser.prototype.convertToTypeIfNeccecary = function(inp, type){
-	if(inp.dtype != type) return this.convertToType(inp, type);
-	return inp;
-};
-
-Parser.prototype.newTmpVar = function(dtype, loc){
-	var rv = new Variable(this.no.newTmpName(), dtype, this.scope, 'tmp', undefined, loc);
-	this.variables.push(rv);
-	return rv;
-};
-
-Parser.prototype.newDataVar = function(dtype, value, loc){
-	var rv = new Variable(this.no.newTmpName(), dtype, this.scope, 'data', value, loc);
-	this.dvariables.push(rv);
-	return rv;
-};
-
-Parser.prototype.newBytesVar = function(dtype, value, loc){
-	var rv = new Variable(this.no.newTmpName(), dtype, this.scope, 'bytes', value, loc);
-	this.variables.push(rv);
-	return rv;
-};
-
-
-Parser.prototype.newRefVar = function(dtype, loc){
-	var rv = new Variable(this.no.newTmpName(), dtype, this.scope, 'ref', undefined, loc);
-	this.variables.push(rv);
-	return rv;
-};
-
-Parser.prototype.newUserVar = function(name, dtype, loc){
-	var rv = new Variable(name, dtype, this.scope, 'user', undefined, loc);
-	if(this.variableExistsInScope(rv)!=-1) this.error('Error, variable: ' + name + ' has already been defined on line ' + loc);
-	this.variables.push(rv);
-	return rv;
-};
-
 
 module.exports = Parser;
