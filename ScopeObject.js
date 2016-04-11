@@ -105,13 +105,75 @@ ScopeObject.prototype.variableExists = function(v, vars){
 
 //tries to get a variable out of the scope
 //tries to get a variable on the stack or a global one
-Parser.prototype.getDefinedVariable = function(v){
+ScopeObject.prototype.getDefinedVariable = function(v){
 	for(var i = 1; i < this.variables.length; i++){
 		var v2 = this.variableExists(v, this.variables.slice(-i));
 		if(v2 !== undefined) return v2;
 	}
 	return undefined;
 };
+
+//force convert a variable to a type
+ScopeObject.prototype.convertToType = function(inp, type){
+	var name = this.namingObject.newTmpName();
+	var id = this.namingObject.newId();
+	var vari = new Variable(name, type, this.getScope(), 'tmp', undefined, id, inp.codeLocations);
+	this.getVariables().push(vari);
+	this.addAssembly('convertTo ', type, ' from ', inp.dtype, vari.name, inp.name);
+	return vari;
+};
+
+//convert two variables to the correct type if neccesarry
+//returns the an object:
+//obj.e1 is the e1 variable: converted or not
+//obj.e2 is the e2 variable: converted or not
+//obj.bestType is the best type for both to be converted to assuming they would be going through an operation
+ScopeObject.prototype.possibleTypeConversion = function(e1, e2){
+	var bestType = e1.bestConversion(e2);
+	if(bestType === undefined) this.error('Warning: Cannot combine ' + e1.dtype + ' and ' +
+		e2.dtype + ' to common type');
+	return {
+		"bestType": bestType,
+		"e1": this.convertToTypeIfNecessary(e1, bestType),
+		"e2": this.convertToTypeIfNecessary(e2, bestType)
+	};
+};
+
+//convert e2 to e1's dtype
+ScopeObject.prototype.typeConversionE1 = function(e1, e2){
+	var dtype = e1.dtype;
+	return {
+		"bestType": dtype,
+		"e1": this.convertToTypeIfNecessary(e1, dtype),
+		"e2": this.convertToTypeIfNecessary(e2, dtype)
+	};
+};
+
+//convert a variable to dtype: 'type' if it is necessary
+ScopeObject.prototype.convertToTypeIfNecessary = function(inp, type){
+	if(inp.dtype != type) return this.convertToType(inp, type);
+	return inp;
+};
+
+ScopeObject.prototype.pushContinueBreak = function(cont, brea){
+	this.loopRedirects.push({'continue':cont, 'break':brea});
+};
+
+ScopeObject.prototype.hasLoopRedirects = function(){
+	return this.loopRedirects.length > 0;
+};
+
+ScopeObject.prototype.getContinueLabel = function(){
+	if(this.hasLoopRedirects()) return this.loopRedirects.slice(-1)['continue'];
+	return undefined;
+};
+
+ScopeObject.prototype.getBreakLabel = function(){
+	if(this.hasLoopRedirects()) return this.loopRedirects.slice(-1)['break'];
+	return undefined;
+};
+
+
 
 
 
