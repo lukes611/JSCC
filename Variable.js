@@ -19,7 +19,7 @@ function Variable(name, dtype, scope, type, value, uniqueId, codeLocations){
 }
 
 Variable.prototype.toString = function(){
-	return this.name + ' of type ' + this.dtype + ' in ' + this.scope + ' type(' + 
+	return this.name + ' ('+this.uniqueId + ')    \tof type ' + this.dtype + ' in ' + this.scope + ' type(' + 
 	this.type + ')' + (this.type=='data' || this.type =='bytes'?' = '+this.value:'');
 };
 

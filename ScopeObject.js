@@ -110,6 +110,17 @@ ScopeObject.prototype.newUserVar = function(name, dtype, loc){
 	return rv;
 };
 
+//checks whether a function is already defined
+ScopeObject.prototype.funcExists = function(f){
+	for(var i = 0; i < this.funcs.length; i++) if(e.eq(this.funcs[i])) return this.funcs[i];
+	return undefined;
+};
+
+//creates and returns a new func variable
+ScopeObject.prototype.newFuncVar = function(name, returnType, argumentDTypes){
+	//todo this section
+};
+
 //checks if a variable exists in the current scope
 ScopeObject.prototype.variableExistsInScope = function(v, vars){
 	if(vars === undefined) vars = this.getVariables();
