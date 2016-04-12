@@ -1,14 +1,18 @@
 
+int c = 30;
+
 int main(int argc, char ** argv){
 
-	int a = 5;
-	while(1){
-		a *= 10;
-		if(a == 1000) break;
+	c = 30;
+	{
+		{
+			c = 30;
+		}
+
 	}
 
-
 	return 0;
+		}
 }
 
 

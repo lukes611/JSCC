@@ -50,10 +50,23 @@ ScopeObject.prototype.addAssembly = function(){
 	var st = []; for(var i = 0; i < arguments.length; i++) st.push(arguments[i]);
 	this.getAssembly().push(st.join(' '));
 };
+//adds a list of assembly instructions to the current list of assembly instructions
 ScopeObject.prototype.addAssemblyList = function(l){
 	if(l === undefined) return;
 	for(var i = 0; i < l.length; i++)
 		this.getAssembly().push(l[i]);
+};
+
+//checks if there is some similar data for which we can use rather than storing the same constant on the stack
+ScopeObject.prototype.getDataVariable = function(a){
+	for(var sind = this.dvariables.length-1; sind >= 0; sind--){
+		var vars = this.dvariables[sind];
+		for(var i = 0; i < vars.length; i++){
+			var b = vars[i];
+			if(a.dtype == b.dtype && a.type == b.type && a.value == b.value) return b;
+		}
+	}
+	return undefined;
 };
 
 //creates a new Temporary variable and adds it to the 
@@ -67,6 +80,8 @@ ScopeObject.prototype.newTmpVar = function(dtype, loc){
 ScopeObject.prototype.newDataVar = function(dtype, value, loc){
 	var id = this.namingObject.newId();
 	var rv = new Variable(this.namingObject.newTmpName(), dtype, this.getScope(), 'data', value, id, loc);
+	var possibleReuse = this.getDataVariable(rv);
+	if(possibleReuse !== undefined) return possibleReuse;
 	this.getDVariables().push(rv);
 	return rv;
 };
@@ -101,6 +116,8 @@ ScopeObject.prototype.variableExistsInScope = function(v, vars){
 	for(var i = 0; i < vars.length; i++) if(vars[i].eq(v)) return vars[i];
 	return undefined;
 };
+
+
 
 //checks if a variable exists in some scope
 ScopeObject.prototype.variableExists = function(v, vars){
@@ -191,7 +208,7 @@ ScopeObject.prototype.getBreakLabel = function(){
 //add a new scope
 ScopeObject.prototype.pushScope = function(sname){
 	if(sname === undefined) this.scope.push(this.getScope() + this.namingObject.newId());
-	this.scope.push(sname);
+	else this.scope.push(sname);
 };
 
 //pop and remove the current scope
