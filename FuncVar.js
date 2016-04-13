@@ -14,6 +14,10 @@ FuncVar.prototype.scopeName = function(){
 	return this.name + '('+this.arguments.join(',') + ')->' + this.returnType;
 };
 
+FuncVar.prototype.dtype = function(){
+	return 'func*('+this.arguments.join(',') + ')->' + this.returnType;
+};
+
 FuncVar.prototype.eq = function(f2){ return this.scopeName() == f2.scopeName(); };
 
 FuncVar.prototype.toString = function(){

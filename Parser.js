@@ -43,8 +43,7 @@ Parser.prototype.func = function(){
 		this.matchType(')');
 		this.so.pushAssembly();
 		this.assembly = [];
-		var func = new FuncVar(fname, rtype, args.map(function(x){return x.dtype;}));
-		this.so.funcs.push(func);
+		var func = this.so.newFuncVar(fname, rtype, args.map(function(x){return x.dtype;}));
 		if(this.checkType(';'))
 			this.matchType(';');
 		else{
