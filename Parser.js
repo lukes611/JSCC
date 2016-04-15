@@ -49,6 +49,7 @@ Parser.prototype.func = function(){
 			this.matchType(';');
 		}else{
 			if(func.hasDefinition()) this.error('function ' + fname + ' already has a definition');
+			this.so.pushFunction(func);
 			this.matchType('{');
 			this.so.addAssembly('pushFunc', func.scopeName());
 			this.so.addAssembly('popArgs', args.map(function(x){return x.name}).join(' '));
@@ -59,6 +60,7 @@ Parser.prototype.func = function(){
 			this.matchType('}');
 			this.so.addAssembly('popFunc');
 			this.so.popScope();
+			this.so.popFunction();
 		}
 		func.assembly = this.so.popAssembly();
 		return true;
@@ -129,12 +131,18 @@ Parser.prototype.stmt = function(){
 	}else if(this.checkType('return')){
 		this.pop();
 		if(this.checkType(';')){
+			var rt = this.so.getCurrentFunction().returnType;
+			var returnTypeIsVoid = rt == 'void';
+			if(!returnTypeIsVoid) this.error('must return type ' + rt);
 			this.so.addAssembly('popFunc');
 			this.so.addAssembly('ret');
 			this.pop();
 		}else{
+			var rt = this.so.getCurrentFunction().returnType;
+			var rhs = this.rhs();
+			rhs = this.so.convertToTypeIfNecessary(rhs, rt);
 			this.so.addAssembly('popFunc');
-			this.so.addAssembly('ret', this.rhs().name);
+			this.so.addAssembly('ret', rhs.name);
 			this.matchType(';');
 		}
 		return true;

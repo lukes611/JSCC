@@ -18,6 +18,7 @@ function ScopeObject(errorF){
 	this.scope = ['global'];
 	this.loopRedirects = [];
 	this.funcs = [];
+	this.currentFunc = [];
 	this.namingObject = new NamingObject();
 };
 
@@ -37,6 +38,13 @@ ScopeObject.prototype.toString = function(){
 ScopeObject.prototype.getVariables = function(){return this.variables[this.variables.length-1];};
 ScopeObject.prototype.getDVariables = function(){return this.dvariables[this.dvariables.length-1];};
 ScopeObject.prototype.getScope = function(){return this.scope[this.scope.length-1];};
+
+//returns the most recent current function on the stack
+ScopeObject.prototype.getCurrentFunction = function(){ return this.currentFunc[this.currentFunc.length-1]; };
+//adds another function to the end of the list
+ScopeObject.prototype.pushFunction = function(x){this.currentFunc.push(x);};
+//pops the current function and returns it
+ScopeObject.prototype.popFunction = function(){return this.currentFunc.pop();};
 
 //gets the current assembly code
 ScopeObject.prototype.getAssembly = function(){return this.assembly[this.assembly.length-1];};
@@ -103,6 +111,9 @@ ScopeObject.prototype.defaultTypeValue = function(dtype){
 	return 0;
 };
 
+//generates a list of count number of dtype types
+//default values are used if count > someValues.length
+//someValues defaults to [], if count === -1 then someValues are returned 
 ScopeObject.prototype.generateArray = function(dtype, count, someValues){
 	if(someValues === undefined) someValues = [];
 	if(count === -1) count = someValues.length;
@@ -214,6 +225,7 @@ ScopeObject.prototype.typeConversionE1 = function(e1, e2){
 		"e2": this.convertToTypeIfNecessary(e2, dtype)
 	};
 };
+
 
 //convert a variable to dtype: 'type' if it is necessary
 ScopeObject.prototype.convertToTypeIfNecessary = function(inp, type){

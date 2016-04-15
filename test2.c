@@ -1,7 +1,30 @@
+
+int add(int a, int b){return a + b;}
+
 int main(int argc, char ** argv){
 	
-	int * ar = {7,6,5,4,3,2};
-	int count = 6;	
+//tofix::
+	/*
+		b. must handle cases where new array size is greater than defined elements
+		c. function calls
 
-	return 0;
+	*/	int a = 5;
+		{
+			int a = 6;
+		}
+		return 'a';
+		
+	//add;
+
+	/*
+		add(5,6)
+
+		push 6
+		push 5
+		call add
+
+
+	*/	
+
+	return 0x00;
 }
