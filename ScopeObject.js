@@ -93,6 +93,29 @@ ScopeObject.prototype.newBytesVar = function(dtype, value, loc){
 	return rv;
 };
 
+
+//returns a default value given a dtype
+ScopeObject.prototype.defaultTypeValue = function(dtype){
+	if(dtype == 'int') return 0;
+	else if(dtype == 'char') return '\0';
+	else if(dtype == 'float' || dtype == 'double') return 0.0;
+	else if(dtype == 'string') return '\0';
+	return 0;
+};
+
+ScopeObject.prototype.generateArray = function(dtype, count, someValues){
+	if(someValues === undefined) someValues = [];
+	if(count === -1) count = someValues.length;
+	if(someValues.length > count) this.error('warning, attempting too many array values');
+	var _def = this.defaultTypeValue(dtype);
+	var rv = Array.apply(undefined, Array(count)).map(function(){return _def;});
+	for(var i = 0; i < someValues.length; i++) rv[i] = someValues[i];
+	return rv;
+
+
+};
+
+
 //creates and returns a reference type variable
 ScopeObject.prototype.newRefVar = function(dtype, loc){
 	var id = this.namingObject.newId();

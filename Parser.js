@@ -268,16 +268,23 @@ Parser.prototype.moreInitializers = function(t){
 		vari = this.so.newUserVar(variLex.str, t.str+'*', variLex.locations);
 		this.matchType(']');
 		this.so.addAssembly('=',vari.name,constant.name);
-	}else
+		if(this.checkType('=')){
+			this.pop();
+			var rh = this.rhs();
+			if(rh.dtype !== vari.dtype && rh.type !== 'bytes') this.error('error in array assignment');
+			this.so.addAssembly('=', vari.name, rh.name);
+		}
+	}else{
 		vari = this.so.newUserVar(variLex.str, t.str, variLex.locations);
-
-	if(this.checkType('=')){
-		this.pop();
-		var rh = this.rhs();
-		var bestType = vari.dtype;
-		rh = this.so.convertToTypeIfNecessary(rh, bestType);
-		this.so.addAssembly('=', vari.name, rh.name);
+		if(this.checkType('=')){
+			this.pop();
+			var rh = this.rhs();
+			var bestType = vari.dtype;
+			rh = this.so.convertToTypeIfNecessary(rh, bestType);
+			this.so.addAssembly('=', vari.name, rh.name);
+		}
 	}
+
 	if(this.checkType(',')){
 		this.pop();
 		this.moreInitializers(t);
@@ -417,18 +424,41 @@ Parser.prototype.preElement = function(){
 
 Parser.prototype.element = function(){
 	var e = this.pop();
-	var types = 'int,double,float,char,string,short,hex'.split(',');
+	var types = 'int,double,float,char,short,hex'.split(',');
 	if(types.indexOf(e.type) != -1)
 		return this.so.newDataVar(e.type, e.str, e.locations);
-	else if(e.type == 'name')
+	else if(e.type == 'string'){
+		var value = this.so.generateArray('char', -1, e.str.split('').concat(['\0']));
+		return this.so.newBytesVar('char*', value, e.locations);
+	}else if(e.type == 'name')
 		return this.postNamedVariable(this.existingVariable(e));
 	else if(e.type == '('){
 		var rv = this.rhs();
 		this.matchType(')');
 		return rv;
+	}else if(e.type == '{'){
+		var rv = this.CList();
+		return rv;
 	}
 	this.error('error in element()');
 };
+
+//handles cases like: {1,2,3} -> to do...
+Parser.prototype.CList = function(){
+	var v1 = this.pop();
+	var isType = function(x){ return 'int,double,char,float'.split(',').indexOf(x.type) === -1;};
+	if(isType(v1)) this.error('warning array elements must be simple data types and not variables');
+	var me = this;
+	var rv = [v1];
+	console.log(rv);
+	var nextOne = function(){
+		me.matchType(',');
+		var n = me.pop();
+		if(isType(n))
+	};
+	this.error('yes too much in it');
+};
+
 
 Parser.prototype.existingVariable = function(e){
 	if(e === undefined) e = this.matchType('name');

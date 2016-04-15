@@ -20,7 +20,17 @@ function Variable(name, dtype, scope, type, value, uniqueId, codeLocations){
 
 Variable.prototype.toString = function(){
 	return this.name + ' ('+this.uniqueId + ')    \tof type ' + this.dtype + ' in ' + this.scope + ' type(' + 
-	this.type + ')' + (this.type=='data' || this.type =='bytes'?' = '+this.value:'');
+	this.type + ')' + (this.type=='data' || this.type =='bytes'?' = '+this.printFriendlyValue():'');
+};
+
+Variable.prototype.printFriendlyValue = function(){
+	if(this.value === undefined) return '';
+	else if(typeof this.value === 'object'){
+		if(this.value.length > 30){
+			return this.value.slice(0, 20) + '...';
+		}
+	}
+	return this.value;
 };
 
 Variable.prototype.eq = function(v2){
