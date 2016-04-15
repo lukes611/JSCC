@@ -44,9 +44,11 @@ Parser.prototype.func = function(){
 		this.so.pushAssembly();
 		this.assembly = [];
 		var func = this.so.newFuncVar(fname, rtype, args.map(function(x){return x.dtype;}));
-		if(this.checkType(';'))
+		if(this.checkType(';')){
+			if(func.hasDefinition()) this.error('function ' + fname + ' already has a definition');
 			this.matchType(';');
-		else{
+		}else{
+			if(func.hasDefinition()) this.error('function ' + fname + ' already has a definition');
 			this.matchType('{');
 			this.so.addAssembly('pushFunc', func.scopeName());
 			this.so.addAssembly('popArgs', args.map(function(x){return x.name}).join(' '));

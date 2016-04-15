@@ -119,7 +119,11 @@ ScopeObject.prototype.funcExists = function(f){
 //creates and returns a new func variable
 ScopeObject.prototype.newFuncVar = function(name, returnType, argumentDTypes){
 	var func = new FuncVar(name, returnType, argumentDTypes, this.namingObject.newId());
-	if(this.funcExists(func) !== undefined) this.error('warning function: ' + name + ' already exists');
+	var oldFunc = this.funcExists(func);
+	if(oldFunc !== undefined){
+		if(!oldFunc.hasDefinition()) return oldFunc;
+		else this.error('warning function: ' + name + ' was already defined');
+	}
 	this.funcs.push(func);
 	var v = new Variable(func.name, func.dtype(), this.getScope(), 'function', undefined, this.namingObject.newId());
 	this.getVariables().push(v);

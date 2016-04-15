@@ -18,6 +18,10 @@ FuncVar.prototype.dtype = function(){
 	return 'func*('+this.arguments.join(',') + ')->' + this.returnType;
 };
 
+FuncVar.prototype.hasDefinition = function(){
+	return this.assembly.length > 0;
+};
+
 FuncVar.prototype.eq = function(f2){ return this.scopeName() == f2.scopeName(); };
 
 FuncVar.prototype.toString = function(){

@@ -3,8 +3,7 @@ to do:
 Parser -
 	function calls
 	structs
-	struct member variables and method calling
-
+	
 
 shortcomings: no do while, no preprocessor definitions,
 except #include "blah" or #include <blah>
