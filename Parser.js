@@ -264,15 +264,17 @@ Parser.prototype.moreInitializers = function(t){
 	if(this.top().type == '['){
 		this.pop();
 		var i = this.matchType('int');
-		var constant = this.so.newBytesVar('int', Number(i.str));
 		vari = this.so.newUserVar(variLex.str, t.str+'*', variLex.locations);
 		this.matchType(']');
-		this.so.addAssembly('=',vari.name,constant.name);
 		if(this.checkType('=')){
 			this.pop();
 			var rh = this.rhs();
 			if(rh.dtype !== vari.dtype && rh.type !== 'bytes') this.error('error in array assignment');
 			this.so.addAssembly('=', vari.name, rh.name);
+		}else{
+			var constant = this.so.newBytesVar(vari.dtype, this.so.generateArray(t.str,Number(i.str)));
+			this.so.addAssembly('=',vari.name,constant.name);
+		
 		}
 	}else{
 		vari = this.so.newUserVar(variLex.str, t.str, variLex.locations);
@@ -446,17 +448,24 @@ Parser.prototype.element = function(){
 //handles cases like: {1,2,3} -> to do...
 Parser.prototype.CList = function(){
 	var v1 = this.pop();
-	var isType = function(x){ return 'int,double,char,float'.split(',').indexOf(x.type) === -1;};
-	if(isType(v1)) this.error('warning array elements must be simple data types and not variables');
+	var isType = function(x){ return 'int,double,char,float'.split(',').indexOf(x.type) !== -1;};
+	if(!isType(v1)) this.error('warning array elements must be simple data types and not variables');
 	var me = this;
 	var rv = [v1];
-	console.log(rv);
 	var nextOne = function(){
 		me.matchType(',');
 		var n = me.pop();
-		if(isType(n))
+		if(!isType(n)) me.error('A+warning array elements must be simple data types and not variables');
+		if(v1.dtype !== n.dtype) me.error('B+array elements must be of same type: ' + v1.dtype);
+		rv.push(n);
+		if(me.checkType(',')) nextOne();
 	};
-	this.error('yes too much in it');
+	if(this.checkType(',')) nextOne();
+	if(v1.dtype == 'char') rv = rv.map(function(x){return x.str;});
+	else rv = rv.map(function(x){return Number(x.str);});
+	var value = this.so.generateArray(v1.dtype, -1, rv);
+	this.matchType('}');
+	return this.so.newBytesVar('char*', value, v1.locations);
 };
 
 

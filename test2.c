@@ -1,17 +1,7 @@
 int main(int argc, char ** argv){
 	
-	int c = 5;
-	char ar[10] = "wowee";
-	int ar2[10] = {1,2,3};
+	int * ar = {7,6,5,4,3,2};
+	int count = 6;	
 
-	//int ar[10]={1,2,3};
-	/*
-	"abc" -> a,b,c,\0
-	{1,2,3} -> 
-
-
-	*/
-
-	return 0.0;
-	
+	return 0;
 }
