@@ -9,10 +9,16 @@ int main(int argc, char ** argv){
 
 	int i, c =0;
 	for(i=0;i<20;i++)
-		c = times(add(i,i),i);
+		c += times(add(i,i),i);
+	__sys__("print", c);
 
 
 	/*
+		struct name { int a; };
+		struct name x;
+		x.a = 5;
+
+
 		system(a,b,c..z)
 		push z
 		...

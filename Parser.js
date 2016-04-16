@@ -441,7 +441,9 @@ Parser.prototype.element = function(){
 	else if(e.type == 'string'){
 		var value = this.so.generateArray('char', -1, e.str.split('').concat(['\0']));
 		return this.so.newBytesVar('char*', value, e.locations);
-	}else if(e.type == 'name')
+	}else if(e.type == 'name' && e.str == '__sys__')
+		return this.__sys__();
+	else if(e.type == 'name')
 		return this.postNamedVariable(this.existingVariable(e));
 	else if(e.type == '('){
 		var rv = this.rhs();
@@ -525,6 +527,14 @@ Parser.prototype.postNamedVariable = function(e1){
 		return rv;
 	}
 	return e1;
+};
+
+Parser.prototype.__sys__ = function(){
+	var fargs = this.getFunctionArgs();
+	for(var i = fargs.length-1; i >= 0; i--)
+		this.so.addAssembly('pushArg', fargs[i].name);
+	this.so.addAssembly('system', fargs.length);
+	return this.so.newDataVar('void', 0, this.currentLocation);	
 };
 
 Parser.prototype.getFunctionArgs = function(){
