@@ -1,30 +1,27 @@
+int add(int a, int b);
 
-int add(int a, int b){return a + b;}
+int times(int a, int b){return a*b;}
+
+int d = 5;
 
 int main(int argc, char ** argv){
 	
-//tofix::
-	/*
-		b. must handle cases where new array size is greater than defined elements
-		c. function calls
 
-	*/	int a = 5;
-		{
-			int a = 6;
-		}
-		return 'a';
-		
-	//add;
+	int i, c =0;
+	for(i=0;i<20;i++)
+		c = times(add(i,i),i);
+
 
 	/*
-		add(5,6)
-
-		push 6
-		push 5
-		call add
-
-
+		system(a,b,c..z)
+		push z
+		...
+		push b
+		push a
+		systemCall
 	*/	
 
-	return 0x00;
+	return 0;
 }
+
+int add(int a, int b){return a+b;}

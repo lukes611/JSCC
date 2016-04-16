@@ -175,7 +175,8 @@ ScopeObject.prototype.variableExistsInScope = function(v, vars){
 
 //checks if a variable exists in some scope
 ScopeObject.prototype.variableExists = function(v, vars){
-	for(var i = 0; i < vars.length; i++) if(vars[i].eqStack(v)) return vars[i];
+	for(var i = 0; i < vars.length; i++) if(vars[i].eqStack(v) || (vars[i].name == v.name && vars[i].type == 'function'))
+		return vars[i];
 	return undefined;
 };
 
@@ -190,8 +191,20 @@ ScopeObject.prototype.getDefinedVariable = function(v){
 	return undefined;
 };
 
+ScopeObject.prototype.getMatchingFunction = function(e1, fargs){
+	var inputSn = e1.name + '(' + fargs.map(function(x){return x.dtype}).join(',') + ')';
+	for(var i = 0; i < this.funcs.length; i++){
+		var f = this.funcs[i];
+		var sn = f.scopeName();
+		if(sn === inputSn) return f;
+	}
+	return undefined;
+};
+
+
 //force convert a variable to a type
 ScopeObject.prototype.convertToType = function(inp, type){
+	if(type == 'void' || inp.dtype == 'void') this.error('cannot work with type void');
 	var name = this.namingObject.newTmpName();
 	var id = this.namingObject.newId();
 	var vari = new Variable(name, type, this.getScope(), 'tmp', undefined, id, inp.codeLocations);

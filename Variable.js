@@ -55,7 +55,11 @@ Variable.prototype.dref = function(){
 	return true;
 };
 
+Variable.prototype.isFunction = function(){return this.type == 'function';};
+
 Variable.prototype.bestConversion = function(v2){
+	if(this.dtype == 'void' || v2.dtype == 'void') return undefined;
+	if(this.dtype !== v2.dtype && (this.isFunction() || v2.isFunction())) return undefined;
 	if(this.dtype == v2.dtype) return this.dtype;
 	if(this.isPtr() && v2.isPtr()) return this.dtype;
 	if(this.isPtr()) return this.dtype;

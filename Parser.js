@@ -278,6 +278,7 @@ Parser.prototype.moreInitializers = function(t){
 			this.pop();
 			var rh = this.rhs();
 			if(rh.dtype !== vari.dtype && rh.type !== 'bytes') this.error('error in array assignment');
+			rh.value = this.so.generateArray(vari.dtype, Number(i.str), rh.value);
 			this.so.addAssembly('=', vari.name, rh.name);
 		}else{
 			var constant = this.so.newBytesVar(vari.dtype, this.so.generateArray(t.str,Number(i.str)));
@@ -506,9 +507,43 @@ Parser.prototype.postNamedVariable = function(e1){
 		this.so.addAssembly('=', e2.name, e1.name);
 		this.so.addAssembly(e.type, e1.name);
 		return e2;
+	}else if(e.type == '('){
+		if(!e1.isFunction()) this.error('warning: calling non function type');
+		var fargs = this.getFunctionArgs();
+		var fargs2 = fargs.map(function(x){return x.dtype;});
+		var func = this.so.getMatchingFunction(e1, fargs);
+		if(func === undefined) this.error('warning, function call with arguments ' + fargs2.join(',') + 
+			' called ' + e1.name + ' not found');
+		for(var i = fargs.length-1; i >= 0; i--)
+			this.so.addAssembly('pushArg', fargs[i].name);
+		this.so.addAssembly('call', e1.name, func.uniqueId);
+		if(func.returnType === 'void'){
+			return this.so.newDataVar('void', 0, this.currentLocation);	
+		}
+		var rv = this.so.newTmpVar(func.returnType, this.currentLocation);
+		this.so.addAssembly('popReturnValue', rv.name);
+		return rv;
 	}
 	return e1;
 };
+
+Parser.prototype.getFunctionArgs = function(){
+	this.matchType('(');
+	if(this.checkType(')')){
+		this.pop();
+		return [];
+	}
+	var me = this;
+	var rv = [];
+	var hasMore = function(){return me.checkMatchType(',');};
+	var add = function(){rv.push(me.rhs());};
+	add();
+	while(hasMore()) add();
+	this.matchType(')');
+	return rv;
+};
+
+
 
 Parser.prototype.moreFunction = function(e1, ops, nextFunction){
 	for(var i = 0; i < ops.length; i++){

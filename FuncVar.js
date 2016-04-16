@@ -11,8 +11,10 @@ function FuncVar(name, returnType, argumentDTypes, uniqueId){
 }
 
 FuncVar.prototype.scopeName = function(){
-	return this.name + '('+this.arguments.join(',') + ')->' + this.returnType;
+	return this.name + '('+this.arguments.join(',') + ')';
 };
+
+
 
 FuncVar.prototype.dtype = function(){
 	return 'func*('+this.arguments.join(',') + ')->' + this.returnType;
