@@ -1,33 +1,60 @@
-int add(int a, int b);
 
-int times(int a, int b){return a*b;}
+//struct Person{/
+//	char name[20];
+//	int age;
+//	double d;
+//};
 
-int d = 5;
+/*
+struct: a ptr
+1 * 20 0
+4 * 1 20
+8 * d 24
 
-int main(int argc, char ** argv){
+names: name, age, d
+indices: 0, 20, 24
+
+struct Person p;
+p.age = 25;
+p.d = 2.0;
+
+tmp = p + 20 //tmp is a pointer to type char
+convertTo int* from char* tmp1 tmp
+dref r1 tmp1
+return tmp1
+
+
+
+*/
+
+struct Person{
+	int age;
+	int weight;
+};
+
+
+void main(){
 	
 
-	int i, c =0;
-	for(i=0;i<20;i++)
-		c += times(add(i,i),i);
-	__sys__("print", c);
-
+	char name[20];
+	int age;
+	char * extra;
 
 	/*
-		struct name { int a; };
-		struct name x;
-		x.a = 5;
+	struct object has: dvars, vars, assembly
+	
+	struct Person p;
+
+	struct Person : isStruct
+	structs are pointers
+
+	structs record
+	
+
+	
 
 
-		system(a,b,c..z)
-		push z
-		...
-		push b
-		push a
-		systemCall
-	*/	
 
-	return 0;
+	*/
+
 }
-
-int add(int a, int b){return a+b;}

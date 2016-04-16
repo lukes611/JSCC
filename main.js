@@ -6,8 +6,8 @@ code.open('test2.c');
 var lx = new LexicalAnalyser(code);
 var parser = new Parser(lx.compute());
 //parser.printLexicons();
-parser.multiStmt();
-//while(parser.stmt()) ;
+
+parser.start();
 	
 
 console.log(parser.toString());

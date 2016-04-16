@@ -25,13 +25,18 @@ Parser.prototype.toString = function(){
 	return st;
 };
 
-Parser.prototype.multiStmt = function(){
+Parser.prototype.start = function(){
 	while(true){
-		var t1 = this.func();
-		if(!t1){
-			if(!this.stmt()) break;
-		}
+		if(!this.func())
+			if(this.checkType('TYPE')){
+				this.initializer();
+				this.matchType(';');
+			}else break;
 	}
+};
+
+Parser.prototype.multiStmt = function(){
+	while(true) if(!this.stmt()) break;
 };
 
 Parser.prototype.func = function(){
