@@ -1,6 +1,7 @@
 var Variable = require('./Variable');
 var NamingObject = require('./NamingObject');
 var FuncVar = require('./FuncVar');
+var StructVar = require('./StructVar');
 
 /*
 global -> inits, functions, structs, dvars, vars, assembly, scope
@@ -20,6 +21,7 @@ function ScopeObject(errorF){
 	this.funcs = [];
 	this.currentFunc = [];
 	this.namingObject = new NamingObject();
+	this.structs = [];
 };
 
 //returns a string representation of this object
@@ -29,6 +31,8 @@ ScopeObject.prototype.toString = function(){
 	this.getDVariables().forEach(f1);
 	st += 'VARIABLES:\n';
 	this.getVariables().forEach(f1);
+	st += 'STRUCTS:\n';
+	this.structs.forEach(f1);
 	st += 'CODE:\n';
 	this.getAssembly().forEach(f1);
 	st += 'FUNCTIONS:\n';
@@ -286,7 +290,33 @@ ScopeObject.prototype.popScope = function(){ return this.scope.pop(); };
 ScopeObject.prototype.newLabel = function(){return this.namingObject.newTmpLabel();};
 
 
+//returns the size of dtype in bytes:
+ScopeObject.prototype.sizeOf = function(dtype){
+	if(StructVar.isPtrType(dtype)) return 4;
+	if(dtype.indexOf('struct') !== -1){
+		var name = dtype.split(' ').pop();
+		var st = this.structByName(name);
+		if(st === undefined) this.error('no struct named: ' + name);
+		return st.size;
+	}
+	var ind = 'int,double,char,unsigned int,unsigned char,short'.split(',').indexOf(dtype);
+	if(ind == -1) return undefined;
+	return [4,8,1,4,1,2][ind];
+};
+
+ScopeObject.prototype.structByName = function(name){
+	for(var i = 0; i < this.structs.length; i++) if(name == this.structs[i].name) return this.structs[i];
+	return undefined;
+};
 
 
+ScopeObject.prototype.newStruct = function(n){
+	var rv = new StructVar(n);
+	//check if struct already exists
+	var st = this.structByName(n);
+	if(st !== undefined) this.error('struct ' + n + ' has already been defined');
+	this.structs.push(rv);
+	return rv;
+};
 
 module.exports = ScopeObject;

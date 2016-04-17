@@ -17,12 +17,12 @@ StructVar.prototype.toString = function(){
 	rv.push('name: ' + this.name, 'dtype: ' + this.dtype);
 	rv.push.apply(rv, this.vars.map(StructVar.varToString));
 	rv.push('size in bytes: ' + this.size);
-	return rv.join('\n');
+	return '*****************************\n'+rv.join('\n')+'\n*****************************\n';
 };
 
-StructVar.prototype.newVariable = function(name, dtype, count){
+StructVar.prototype.newVariable = function(name, dtype, count, size_t){
 	if(count === undefined) count = 1;
-	var s = StructVar.sizeOf(dtype);
+	var s = size_t === undefined ? StructVar.sizeOf(dtype) : size_t;
 	s *= count;
 	if(count > 1) dtype += '*';
 	this.vars.push({

@@ -31,7 +31,46 @@ Parser.prototype.start = function(){
 			if(this.checkType('TYPE')){
 				this.initializer();
 				this.matchType(';');
+			}else if(this.checkType('struct')){
+				this.struct();
+				this.matchType(';');
 			}else break;
+	}
+};
+
+Parser.prototype.struct = function(){
+	this.matchType('struct');
+	var nameLex = this.matchType('name');
+	this.matchType('{');
+	var st = this.so.newStruct(nameLex.str);
+	while(!this.checkType('}')){
+		if(this.checkType('struct')){
+			this.matchType('struct');
+			var n = this.matchType('name').str;
+			while(this.checkMatchType('*')) n += '*';
+			this.structElement(st, 'struct ' + n);
+		}else{
+			var dt = this.matchType('TYPE');
+			this.structElement(st, dt.str);
+		}
+		this.matchType(';');
+	}
+	this.matchType('}');
+};
+
+Parser.prototype.structElement = function(struct, dt){
+	var nm = this.matchType('name');
+	var count = 1;
+	if(this.checkType('[')){
+		this.matchType('[');
+		var n = this.matchType('int');
+		this.matchType(']');
+		count = Number(n.str);
+	}
+	struct.newVariable(nm.str, dt, count, this.so.sizeOf(dt));
+	if(this.checkType(',')){
+		this.pop();
+		this.structElement(struct, dt);
 	}
 };
 

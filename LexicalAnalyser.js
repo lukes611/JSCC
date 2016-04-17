@@ -258,7 +258,8 @@ LexicalAnalyser.prototype.compute = function(){
 
 //check a string input for it's type
 LexicalAnalyser.prototype.interpretString = function(str){
-	var types = 'double,int,char,void,struct,short,float,union'.split(',');
+	if(str == 'struct') return 'struct';
+	var types = 'double,int,char,void,short,float'.split(',');
 	var selfDescribers = 'for while if else return continue break'.split(' ');
 	if(types.indexOf(str) != -1) return 'TYPE';
 	else if(selfDescribers.indexOf(str) != -1) return '' + str;
@@ -268,7 +269,7 @@ LexicalAnalyser.prototype.interpretString = function(str){
 
 //check a string input if it is part of a type
 LexicalAnalyser.prototype.stringIsType = function(str){
-	var types = 'double,int,char,void,struct,short,float,union,unsigned'.split(',');
+	var types = 'double,int,char,void,short,float,unsigned'.split(',');
 	if(types.indexOf(str) != -1) return true;
 	return false;
 };

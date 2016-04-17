@@ -25,36 +25,27 @@ return tmp1
 
 
 
-*/
+name = person
+type var(|[]), var(|[])... ;
+type ...
 
-struct Person{
-	int age;
-	int weight;
+*/
+struct Node{
+	int data;
+	struct Node * next;
 };
 
+struct LinkedList{
+	struct Node * head;
+	int length;
+};
 
 void main(){
-	
+	int i;
+	for(i = 0; i < 5; i++){
+		i -= 1;
+		while(i < 5) i++;
+	}	
 
-	char name[20];
-	int age;
-	char * extra;
-
-	/*
-	struct object has: dvars, vars, assembly
-	
-	struct Person p;
-
-	struct Person : isStruct
-	structs are pointers
-
-	structs record
-	
-
-	
-
-
-
-	*/
 
 }
