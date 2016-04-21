@@ -20,6 +20,11 @@ StructVar.prototype.toString = function(){
 	return '*****************************\n'+rv.join('\n')+'\n*****************************\n';
 };
 
+StructVar.prototype.getVar = function(name){
+	for(var i = 0; i < this.vars.length; i++) if(this.vars[i].name == name) return this.vars[i];
+	return undefined;
+};
+
 StructVar.prototype.newVariable = function(name, dtype, count, size_t){
 	if(count === undefined) count = 1;
 	var s = size_t === undefined ? StructVar.sizeOf(dtype) : size_t;
@@ -46,5 +51,7 @@ StructVar.sizeOf = function(dtype){
 	if(ind == -1) return undefined;
 	return [4,8,1,4,1,2][ind];
 };
+
+
 
 module.exports = StructVar;

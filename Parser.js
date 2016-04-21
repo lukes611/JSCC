@@ -39,6 +39,8 @@ Parser.prototype.start = function(){
 };
 
 Parser.prototype.struct = function(){
+	var isStructDefinition = this.checkType('struct') && this.checkType('name', 1) && this.checkType('{', 2);
+	if(!isStructDefinition) return;
 	this.matchType('struct');
 	var nameLex = this.matchType('name');
 	this.matchType('{');
@@ -130,7 +132,7 @@ Parser.prototype.funcArgs = function(){
 Parser.prototype.stmt = function(){
 	if(this.top() == undefined) return false;
 	if(this.top().type == '}') return false;
-	if(this.top().type == 'TYPE'){
+	if(this.checkType('TYPE') || this.checkType('struct')){
 		this.initializer();
 		this.matchType(';');
 		return true;
@@ -305,18 +307,31 @@ Parser.prototype.moreRHS = function(){
 
 Parser.prototype.initializer = function(){
 	var t = this.top();
-	if(t.type != 'TYPE' || t.str == 'void') return;
-	this.pop();
-	this.moreInitializers(t);
+	if(t.type == 'TYPE'){
+		this.matchType('TYPE');
+		var dtype = t.str;
+		this.moreInitializers(dtype);
+	}else if(t.type == 'struct'){
+		var isStructDefinition = this.checkType('struct') && this.checkType('name', 1) && this.checkType('{', 2);
+		if(isStructDefinition) return;
+		this.matchType('struct');
+		var name = this.matchType('name').str;
+		var st = this.so.structByName(name);
+		if(st === undefined) this.error('struct by the name of ' + name + ' does not exist');
+		var dtype = 'struct ' + name;
+		this.moreInitializers(dtype);
+	}
+
+	return;
 };
 
-Parser.prototype.moreInitializers = function(t){
+Parser.prototype.moreInitializers = function(dtype){
 	var variLex = this.matchType('name');
 	var vari;
 	if(this.top().type == '['){
 		this.pop();
 		var i = this.matchType('int');
-		vari = this.so.newUserVar(variLex.str, t.str+'*', variLex.locations);
+		vari = this.so.newUserVar(variLex.str, dtype+'*', variLex.locations);
 		this.matchType(']');
 		if(this.checkType('=')){
 			this.pop();
@@ -325,12 +340,12 @@ Parser.prototype.moreInitializers = function(t){
 			rh.value = this.so.generateArray(vari.dtype, Number(i.str), rh.value);
 			this.so.addAssembly('=', vari.name, rh.name);
 		}else{
-			var constant = this.so.newBytesVar(vari.dtype, this.so.generateArray(t.str,Number(i.str)));
+			var constant = this.so.newBytesVar(vari.dtype, this.so.generateArray(dtype,Number(i.str)));
 			this.so.addAssembly('=',vari.name,constant.name);
 		
 		}
 	}else{
-		vari = this.so.newUserVar(variLex.str, t.str, variLex.locations);
+		vari = this.so.newUserVar(variLex.str, dtype, variLex.locations);
 		if(this.checkType('=')){
 			this.pop();
 			var rh = this.rhs();
@@ -342,7 +357,7 @@ Parser.prototype.moreInitializers = function(t){
 
 	if(this.checkType(',')){
 		this.pop();
-		this.moreInitializers(t);
+		this.moreInitializers(dtype);
 	}
 };
 
@@ -569,6 +584,25 @@ Parser.prototype.postNamedVariable = function(e1){
 		var rv = this.so.newTmpVar(func.returnType, this.currentLocation);
 		this.so.addAssembly('popReturnValue', rv.name);
 		return rv;
+	}else if(e.type == '.'){
+		this.pop();
+		if(!e1.isStruct()) this.error('cannot index type ', e1.dtype);
+		var structDefinition = this.so.structByName(e1.nameOfStruct());
+		var name = this.matchType('name').str;
+		var nameVar = structDefinition.getVar(name);
+		if(nameVar === undefined) this.error('struct ' + structDefinition + ' has no member called ' + name);
+		var index = nameVar.index;
+		console.log(name, 'is at', index);
+		var pointerToStruct = this.so.newTmpVar(structDefinition.dtype);
+		this.so.addAssembly('ref', pointerToStruct.name, e1.name);
+		var charPointer = this.so.convertToType(pointerToStruct, 'char*');
+		var properIndexedCharPointer = this.so.newTmpVar('char*');
+		var indexToAdd = this.so.newDataVar('char*', index);
+		this.so.addAssembly('+', properIndexedCharPointer.name, charPointer.name, indexToAdd.name);
+		var eOut = this.so.convertToType(properIndexedCharPointer, nameVar.dtype + '*');
+		var rv = this.so.newRefVar(nameVar.dtype);
+		this.so.addAssembly('dref', rv.name, eOut.name);
+		return this.postNamedVariable(rv);
 	}
 	return e1;
 };

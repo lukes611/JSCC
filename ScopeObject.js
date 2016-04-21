@@ -108,6 +108,7 @@ ScopeObject.prototype.newBytesVar = function(dtype, value, loc){
 
 //returns a default value given a dtype
 ScopeObject.prototype.defaultTypeValue = function(dtype){
+	if(dtype.indexOf('*') != -1) return 0;
 	if(dtype == 'int') return 0;
 	else if(dtype == 'char') return '\0';
 	else if(dtype == 'float' || dtype == 'double') return 0.0;
@@ -209,10 +210,7 @@ ScopeObject.prototype.getMatchingFunction = function(e1, fargs){
 //force convert a variable to a type
 ScopeObject.prototype.convertToType = function(inp, type){
 	if(type == 'void' || inp.dtype == 'void') this.error('cannot work with type void');
-	var name = this.namingObject.newTmpName();
-	var id = this.namingObject.newId();
-	var vari = new Variable(name, type, this.getScope(), 'tmp', undefined, id, inp.codeLocations);
-	this.getVariables().push(vari);
+	var vari = this.newTmpVar(type);
 	this.addAssembly('convertTo ', type, ' from ', inp.dtype, vari.name, inp.name);
 	return vari;
 };
@@ -293,7 +291,7 @@ ScopeObject.prototype.newLabel = function(){return this.namingObject.newTmpLabel
 //returns the size of dtype in bytes:
 ScopeObject.prototype.sizeOf = function(dtype){
 	if(StructVar.isPtrType(dtype)) return 4;
-	if(dtype.indexOf('struct') !== -1){
+	if(dtype.indexOf('struct') !== -1 && dtype.split(' ').length > 1){
 		var name = dtype.split(' ').pop();
 		var st = this.structByName(name);
 		if(st === undefined) this.error('no struct named: ' + name);

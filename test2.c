@@ -30,22 +30,17 @@ type var(|[]), var(|[])... ;
 type ...
 
 */
-struct Node{
-	int data;
-	struct Node * next;
+
+struct Person{
+	char name[20];
+	int age;
 };
 
-struct LinkedList{
-	struct Node * head;
-	int length;
-};
 
 void main(){
-	int i;
-	for(i = 0; i < 5; i++){
-		i -= 1;
-		while(i < 5) i++;
-	}	
-
-
+	struct Person luke;
+	char * n = "luke";
+	luke.age = 25;
+	int i = 0;
+	for(i = 0; i < 5; i++) luke.name[i] = n[i];
 }

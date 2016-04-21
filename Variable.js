@@ -37,6 +37,19 @@ Variable.prototype.eq = function(v2){
 	return this.name == v2.name && this.scope == v2.scope && this.type == v2.type;
 };
 
+Variable.prototype.isStruct = function(){
+	if(this.isPtr()) return false;
+	return this.dtype.indexOf('struct') != -1 && this.dtype.split(' ').length == 2;
+};
+
+Variable.prototype.nameOfStruct = function(){
+	var s = this.dtype.split(' ');
+	if(s.length <= 1) return;
+	s = s[1];
+	s = s.replace(/\*/g, '');
+	return s;
+};
+
 
 Variable.prototype.eqGlobal = function(v2){ return this.name == v2.name && this.type == v2.type &&
 	(this.scope == 'global'); };
@@ -53,6 +66,12 @@ Variable.prototype.dref = function(){
 	var index = this.dtype.length - 1 - this.dtype.split('').reverse().indexOf('*');
 	this.dtype = this.dtype.substr(0, index) + this.dtype.substr(index+1);
 	return true;
+};
+
+Variable.prototype.getDrefType = function(){
+	if(!this.isPtr()) return undefined;
+	var index = this.dtype.length - 1 - this.dtype.split('').reverse().indexOf('*');
+	return this.dtype.substr(0, index) + this.dtype.substr(index+1);
 };
 
 Variable.prototype.isFunction = function(){return this.type == 'function';};
