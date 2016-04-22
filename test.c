@@ -4,12 +4,12 @@ struct Person
 	int age;
 };
 
-int add(int, int);
+int add(int a, int b);
 
 int main()
 {
 
-	print("hello there");
+	__sys__("print", "hello there");
 	int a = 5;
 	double d = 5.0;
 	float c = 2.0f;

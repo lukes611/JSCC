@@ -1,6 +1,4 @@
-var CSourceCode = require('./CSourceCode');
-var Lexicon = require('./Lexicon');
-
+if(typeof module !== 'undefined') var Lexicon = require('./Lexicon');
 
 
 //an object which performs the lexical analysis
@@ -284,4 +282,4 @@ LexicalAnalyser.prototype.stringIsUnsignedType = function(str){
 
 
 
-module.exports = LexicalAnalyser;
+if(typeof module !== 'undefined') module.exports = LexicalAnalyser;

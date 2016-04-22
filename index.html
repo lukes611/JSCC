@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>C compiler</title>
+	<style>
+		.ta{
+			width:600px;
+			height:450px;
+		}
+		#compileButton{
+			width:1200px;
+		}
+	</style>
+	<script src="CSourceCode.js"></script>
+	<script src="Lexicon.js"></script>
+	<script src="LexicalAnalyser.js"></script>
+</head>
+<body>
+	<h1>
+		JSCC - a C programming language compiler
+	</h1>
+	<table>
+		<tr>
+			<td>input</td>
+			<td>output</td>
+		</tr>
+		<tr>
+			<td><textarea id="inputTA" class="ta" >
+int add(int a, int b){
+    return a+b;
+}
+
+int main(){
+    int a = 5;
+    for(a = 0; a < 5; a++)
+        b += add(a,a);
+    return 0;
+}
+			
+			</textarea></td>
+			<td><textarea id="outputTA" class="ta" ></textarea></td>
+		</tr>
+	</table>
+	<button id="compileButton" onclick="comp()">compile</button>
+	<script>
+function comp(){
+	console.log('compiling');
+	var input = document.getElementById('inputTA').value;
+	console.log(input);
+	var code = new CSourceCode(input);
+	var lx = new LexicalAnalyser(code);
+	console.log(lx);
+}
+
+	</script>
+</body>
+</html>

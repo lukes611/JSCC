@@ -1,3 +1,4 @@
+
 function Lexicon(type, str, locationFrom, locationTo){
 	this.type = type;
 	this.str = str;
@@ -10,4 +11,4 @@ Lexicon.prototype.toString = function(){
 
 
 
-module.exports = Lexicon;
+if(typeof module !== 'undefined') module.exports = Lexicon;

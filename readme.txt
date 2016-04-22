@@ -1,7 +1,9 @@
 JSCC - a basic C compiler written in JavaScript
 to do:
-Parser -
-	structs
+	function prototypes int add(int,int) : like this...
+	
+
+	
 	
 
 shortcomings: no do while, no preprocessor definitions,

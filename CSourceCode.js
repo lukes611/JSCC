@@ -1,4 +1,7 @@
-var fs = require('fs');
+if(typeof module !== 'undefined'){
+	var fs = require('fs');
+}
+
 
 //source code object, input source cde
 function CSourceCode(str){
@@ -128,6 +131,6 @@ CSourceCode.prototype.topIsHexSymbol = function(){
 
 
 
-
-module.exports = CSourceCode;
+if(typeof module !== 'undefined')
+	module.exports = CSourceCode;
 

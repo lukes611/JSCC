@@ -1,7 +1,4 @@
 var Variable = require('./Variable');
-var NamingObject = require('./NamingObject');
-var assert = require('assert');
-var FuncVar = require('./FuncVar');
 var LexiProcessor = require('./LexiProcessor');
 var ScopeObject = require('./ScopeObject');
 
