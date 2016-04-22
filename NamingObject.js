@@ -22,4 +22,4 @@ NamingObject.prototype.newId = function(){
 };
 
 
-module.exports = NamingObject;
+if(typeof module !== 'undefined') module.exports = NamingObject;

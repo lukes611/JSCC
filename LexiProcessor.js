@@ -1,4 +1,4 @@
-var assert = require('assert');
+
 
 
 function LexiProcessor(ll){
@@ -13,7 +13,7 @@ LexiProcessor.prototype.printLexicons = function(){
 
 //prints out an error and stops the program
 LexiProcessor.prototype.error = function(str){
-	assert(false, 'error: ' + str + ' at location: ' + this.currentLocationString());
+	throw 'error: ' + str + ' at location: ' + this.currentLocationString();
 };
 
 //gets a string version of the current line number and column number to list where the 
@@ -72,4 +72,4 @@ LexiProcessor.prototype.checkMatchType = function(type, index){
 
 
 
-module.exports = LexiProcessor;
+if(typeof module !== 'undefined') module.exports = LexiProcessor;

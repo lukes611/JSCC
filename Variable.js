@@ -94,4 +94,4 @@ Variable.prototype.bestConversion = function(v2){
 
 
 
-module.exports = Variable;
+if(typeof module !== 'undefined') module.exports = Variable;

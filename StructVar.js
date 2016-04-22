@@ -54,4 +54,4 @@ StructVar.sizeOf = function(dtype){
 
 
 
-module.exports = StructVar;
+if(typeof module !== 'undefined') module.exports = StructVar;

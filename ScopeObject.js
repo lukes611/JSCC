@@ -1,7 +1,9 @@
-var Variable = require('./Variable');
-var NamingObject = require('./NamingObject');
-var FuncVar = require('./FuncVar');
-var StructVar = require('./StructVar');
+if(typeof module !== 'undefined'){
+	var Variable = require('./Variable');
+	var NamingObject = require('./NamingObject');
+	var FuncVar = require('./FuncVar');
+	var StructVar = require('./StructVar');
+}
 
 /*
 global -> inits, functions, structs, dvars, vars, assembly, scope
@@ -317,4 +319,4 @@ ScopeObject.prototype.newStruct = function(n){
 	return rv;
 };
 
-module.exports = ScopeObject;
+if(typeof module !== 'undefined') module.exports = ScopeObject;

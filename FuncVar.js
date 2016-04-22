@@ -40,4 +40,4 @@ FuncVar.prototype.toString = function(){
 
 
 
-module.exports = FuncVar;
+if(typeof module !== 'undefined') module.exports = FuncVar;

@@ -1,6 +1,8 @@
-var Variable = require('./Variable');
-var LexiProcessor = require('./LexiProcessor');
-var ScopeObject = require('./ScopeObject');
+if(typeof module !== 'undefined'){
+	var Variable = require('./Variable');
+	var LexiProcessor = require('./LexiProcessor');
+	var ScopeObject = require('./ScopeObject');
+}
 
 //the parser object
 function Parser(lexiList){
@@ -246,7 +248,6 @@ Parser.prototype.forStmt = function(){
 	
 	this.so.addAssembly('label', contLabel);
 
-	console.log(CAssembly)
 	this.so.addAssemblyList(CAssembly);
 	
 	this.so.addAssembly('goto', restartLabel);
@@ -661,4 +662,5 @@ Parser.prototype.moreFunctionAssignment = function(e1, ops, nextFunction){
 	return e1;	
 };
 
-module.exports = Parser;
+
+if(typeof module !== 'undefined') module.exports = Parser;

@@ -14,6 +14,13 @@
 	<script src="CSourceCode.js"></script>
 	<script src="Lexicon.js"></script>
 	<script src="LexicalAnalyser.js"></script>
+	<script src="Variable.js"></script>
+	<script src="LexiProcessor.js"></script>
+	<script src="NamingObject.js"></script>
+	<script src="FuncVar.js"></script>
+	<script src="StructVar.js"></script>
+	<script src="ScopeObject.js"></script>
+	<script src="Parser.js"></script>
 </head>
 <body>
 	<h1>
@@ -49,7 +56,12 @@ function comp(){
 	console.log(input);
 	var code = new CSourceCode(input);
 	var lx = new LexicalAnalyser(code);
-	console.log(lx);
+	var parser = new Parser(lx.compute());
+	parser.start();
+	var assembly = parser + '';
+	
+	document.getElementById('outputTA').value = assembly;
+
 }
 
 	</script>
