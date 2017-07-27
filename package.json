@@ -1,0 +1,22 @@
+{
+  "name": "jscc",
+  "version": "1.0.0",
+  "description": "JSCC - a basic C compiler written in JavaScript to do: \tfunction prototypes int add(int,int) : like this...",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lukes611/JSCC.git"
+  },
+  "author": "luke lincoln",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lukes611/JSCC/issues"
+  },
+  "homepage": "https://github.com/lukes611/JSCC#readme",
+  "dependencies": {
+    "express": "^4.15.3"
+  }
+}
